@@ -1,0 +1,9 @@
+import mongoose from "mongoose";
+
+let userSchema = mongoose.Schema({
+    wallet_id:{type:String , required:true},
+    user_id:{type:Number , required:true},
+},{timestamps:true})
+
+let userModel = mongoose.model("users" , userSchema);
+export default userModel;
