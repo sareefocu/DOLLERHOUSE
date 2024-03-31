@@ -19,7 +19,7 @@ export const getUserDetails = async (req, res) => {
       }
       return acc;
     }, []);
-    const total_reward = team_details.refferal_details.reduce((acc, curr) => {
+    const total_reward = recent_referrals.reduce((acc, curr) => {
       acc += curr.reward;
       return acc;
     }, 0);
@@ -32,11 +32,25 @@ export const getUserDetails = async (req, res) => {
       }
       return acc;
     }, 0);
+    let count = 0;
+    let flag = true
+    let prevoise = team_details.refferal_id
+    while(flag){
+      let parent = await teamModel.findOne({ wallet_id: prevoise });
+      if(!parent){
+        flag = false;
+      }else{
+        count++;
+        prevoise=parent.refferal_id
+      }
+    }
+    count=count+team_details.refferal_details.length+1
     return res.status(200).send({
       status: "ok",
       data: {
-        team_members_in_last_24Hours: total_users_in_24Hours.length,
-        total_team_members: team_details.refferal_details.length,
+        total_team:count,
+        direct_team_last24hr: total_users_in_24Hours.length,
+        direct_team: team_details.refferal_details.length,
         total_reward: total_reward,
         plan_reward_ratio: plan_value / total_reward,
       },
