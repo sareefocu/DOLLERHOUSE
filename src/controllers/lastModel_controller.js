@@ -274,7 +274,7 @@ const setdata = async (plandata, a, b, ref1, res) => {
         const refExists111neww = await ref.findOne({ refId: item.refId });
         console.log("refExists111neww", refExists111neww);
     });
-    await refExists.save(); // Save changes to the document
+    await refExists?.save(); // Save changes to the document
     if (!memberDetails) {
         return res.send({ message: "team not found" })
     }
@@ -283,6 +283,126 @@ const setdata = async (plandata, a, b, ref1, res) => {
     const filteredDatalastwor = memberDetails[0]?.referBY.filter(item => item.depthleval === 4);
     res.send({ data: filteredData, data1: memberDetails12, filteredDatalastwor: filteredDatalastwor, userdata: userdata })
 }
+const setdata1122233 = async (plandata, a, b, ref1) => {
+    try {
+        let memberDetails12 = await ref1.aggregate([
+            {
+                $match: {
+                    refId: b === "" ? a : a + b,
+                },
+            },
+            {
+                $graphLookup: {
+                    from: plandata,
+                    startWith: "$refId",
+                    connectFromField: "refId",
+                    depthField: "depthleval",
+                    connectToField: "supporterId",
+                    maxDepth: 4,
+                    as: "referBY",
+                },
+            },
+            {
+                $lookup: {
+                    from: "plan_buyeds",
+                    localField: "referBY.refId",
+                    foreignField: "wallet_id",
+                    as: "result",
+                },
+            },
+            {
+                $addFields: {
+                    referBY: {
+                        $map: {
+                            input: "$referBY",
+                            as: "refer",
+                            in: {
+                                $mergeObjects: [
+                                    "$$refer",
+                                    {
+                                        result: {
+                                            $filter: {
+                                                input: "$result",
+                                                as: "res",
+                                                cond: {
+                                                    $eq: [
+                                                        "$$res.wallet_id",
+                                                        "$$refer.refId",
+                                                    ],
+                                                },
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                $project: {
+                    result: 0, // Optionally remove the 'result' field from the output
+                },
+            },
+        ]
+        )
+        const refExists = await ref1.findOne({ refId: a });
+        memberDetails12[0]?.referBY.forEach(async (item) => {
+            const refIdExists = refExists.missedusers.some(missedUser => missedUser.refId === item.refId);
+            if (!refIdExists) {
+                refExists.missedusers.push({
+                    uid: item.uid,
+                    refId: item.refId,
+                    mainId: item.mainId,
+                    supporterId: item.supporterId,
+                    depthleval: item.depthleval,
+                    status: "done",
+                    createdAt: item.createdAt
+                });
+            }
+        });
+        await refExists?.save(); // Save changes to the document
+        let userdata = await ref1.find({ refId: a })
+        console.log("aaaaa", a);
+        const refExists111neww = await ref1.find({ misseduser: a });
+        return { userdata: userdata, missedUser: refExists111neww }
+    } catch (error) {
+        return {}; // Re-throw the error to be caught by the caller
+    }
+}
+
+
+const setdata11 = async (req, res) => {
+    try {
+        const id = req.params.id;
+        let memberDetails1 = await userModel.findOne({ user_id: id });
+        let a = memberDetails1.wallet_id.slice('.');
+        let b = "";
+
+        console.log("b", b);
+        console.log("a", a);
+        console.log("a + b", a + b);
+        const promises = [
+            setdata1122233("refs", a, b, ref),
+            setdata1122233("ref40", a, b, ref40),
+            setdata1122233("ref100", a, b, ref100),
+            setdata1122233("ref200", a, b, ref200),
+            setdata1122233("ref500", a, b, ref500),
+            setdata1122233("ref1000", a, b, ref1000),
+            setdata1122233("ref2000", a, b, ref2000),
+            setdata1122233("ref4000", a, b, ref4000)
+        ];
+        // Wait for all promises to resolve
+        const results = await Promise.all(promises);
+
+        // Send the response with results
+        res.send({ data: results });
+    } catch (error) {
+        console.error("Error in setdata11:", error);
+        res.status(500).send({ message: "Internal server error" });
+    }
+};
+
 
 async function getRef(refSelectedId, refId, id) {
     const refSelected = await ref.findOne({ refId: refSelectedId });
@@ -904,4 +1024,4 @@ const getTeamController = async (req, res) => {
 }
 
 
-export { lastModelController, getTeamController, getSingleMember, getalldata };
+export { lastModelController, getTeamController, getSingleMember, getalldata, setdata11 };
