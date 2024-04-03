@@ -1259,7 +1259,8 @@ const getPlanController = async (req, res) => {
                 innerAmountSum4000: innerAmountSum4000,
             }, data4: {
                 totalSlotSum: totalSlotSum,
-                sum24HourIncome: sum24HourIncome
+                sum24HourIncome: sum24HourIncome,
+allpro: memberDetails12?.house_reward?.filter(item => item.amount == 20 && item.status ===  undefined).reduce((sum, item) => sum + item.house_reward, 0) + memberDetails12?.house_reward?.filter(item => item.amount == 40 && item.status ===  undefined).reduce((sum, item) => sum + item.house_reward, 0) + memberDetails12?.house_reward?.filter(item => item.amount == 100 && item.status ===  undefined).reduce((sum, item) => sum + item.house_reward, 0)+ memberDetails12?.house_reward?.filter(item => item.amount == 200 && item.status ===  undefined).reduce((sum, item) => sum + item.house_reward, 0)+ memberDetails12?.house_reward?.filter(item => item.amount == 500 && item.status ===  undefined).reduce((sum, item) => sum + item.house_reward, 0)+ memberDetails12?.house_reward?.filter(item => item.amount == 2000 && item.status ===  undefined).reduce((sum, item) => sum + item.house_reward, 0)+ memberDetails12?.house_reward?.filter(item => item.amount == 4000 && item.status ===  undefined).reduce((sum, item) => sum + item.house_reward, 0)++ memberDetails12?.house_reward?.filter(item => item.amount == 1000 && item.status ===  undefined).reduce((sum, item) => sum + item.house_reward, 0),
             }
         });
     } catch (error) {
