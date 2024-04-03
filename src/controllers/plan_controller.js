@@ -1258,7 +1258,7 @@ const getPlanController = async (req, res) => {
                 r4000: memberDetails12?.house_reward?.filter(item => item.amount == 4000).length,
             },data3
           , data4: {
-profit:data3.h120all +data3.h140all +data3.h1100all+data3.h1200all+data3.h1500all+data3.h11000all+data3.h12000all+data3.h14000all+data3.h1520all+data3.h1540all+data3.h15100all+data3.h15200all+data3.h15500all+data3.h151000all+data3.h152000all+data3.h154000all
+profit:data3.h120all +data3.h140all +data3.h1100all+data3.h1200all+data3.h1500all+data3.h11000all+data3.h12000all+data3.h14000all+data3.h1520all+data3.h1540all+data3.h15100all+data3.h15200all+data3.h15500all+data3.h151000all+data3.h152000all+data3.h154000all+data3.innerAmountSum20+data3.innerAmountSum40+data3.innerAmountSum100+data3.innerAmountSum200+data3.innerAmountSum500+data3.innerAmountSum1000+data3.innerAmountSum2000+data3.innerAmountSum4000,
                 totalSlotSum: totalSlotSum,
                 sum24HourIncome: sum24HourIncome
             }
