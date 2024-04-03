@@ -1207,7 +1207,7 @@ const getPlanController = async (req, res) => {
     for (const amount of amounts) {
       const allKey = `h1${amount}all`;
       const missKey = `h1${amount}miss`;
-      data1 += memberDetails12?.house_reward?.filter(item => item.amount === amount && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0);
+      data122 += memberDetails12?.house_reward?.filter(item => item.amount === amount && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0);
       data3[allKey] = memberDetails12?.house_reward?.filter(item => item.amount === amount && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0);
       data3[missKey] = memberDetails12?.house_reward?.filter(item => item.amount === amount && item.status !== undefined).reduce((sum, item) => sum + item.house_reward, 0);
     }
@@ -1215,7 +1215,7 @@ const getPlanController = async (req, res) => {
     const levelAmounts = [20, 40, 100, 200, 500, 1000, 2000, 4000];
     for (const amount of levelAmounts) {
       const allKey = `h15${amount}all`;
-      data1 += memberDetails12?.level_reward?.filter(item => item.amount === amount).reduce((sum, item) => sum + item.reward, 0);
+      data122 += memberDetails12?.level_reward?.filter(item => item.amount === amount).reduce((sum, item) => sum + item.reward, 0);
       data3[allKey] = memberDetails12?.level_reward?.filter(item => item.amount === amount).reduce((sum, item) => sum + item.reward, 0);
       data3[`h1${amount}miss`] = 0;
     }
@@ -1246,8 +1246,7 @@ const getPlanController = async (req, res) => {
       },
       data3,
       data4: {
-        allpro: memberDetails12?.house_reward?.filter(item => item.amount == 20 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0) + memberDetails12?.house_reward?.filter(item => item.amount == 40 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0) + memberDetails12?.house_reward?.filter(item => item.amount == 100 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0) + memberDetails12?.house_reward?.filter(item => item.amount == 200 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0) + memberDetails12?.house_reward?.filter(item => item.amount == 500 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0) + memberDetails12?.house_reward?.filter(item => item.amount == 2000 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0) + memberDetails12?.house_reward?.filter(item => item.amount == 4000 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0) + memberDetails12?.house_reward?.filter(item => item.amount == 1000 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0) + memberDetails12?.level_reward?.filter(item => item.amount == 20 && item.status === undefined).reduce((sum, item) => sum + item.reward, 0) + memberDetails12?.level_reward?.filter(item => item.amount == 40 && item.status === undefined).reduce((sum, item) => sum + item.reward, 0) + memberDetails12?.level_reward?.filter(item => item.amount == 100 && item.status === undefined).reduce((sum, item) => sum + item.reward, 0) + memberDetails12?.level_reward?.filter(item => item.amount == 200 && item.status === undefined).reduce((sum, item) => sum + item.reward, 0) + memberDetails12?.level_reward?.filter(item => item.amount == 500 && item.status === undefined).reduce((sum, item) => sum + item.reward, 0) + memberDetails12?.level_reward?.filter(item => item.amount == 2000 && item.status === undefined).reduce((sum, item) => sum + item.reward, 0) + memberDetails12?.level_reward?.filter(item => item.amount == 4000 && item.status === undefined).reduce((sum, item) => sum + item.reward, 0) + memberDetails12?.level_reward?.filter(item => item.amount == 1000 && item.status === undefined).reduce((sum, item) => sum + item.reward, 0) + innerAmountSum20 + innerAmountSum40 + innerAmountSum100 + innerAmountSum200 + innerAmountSum500 + innerAmountSum1000 + innerAmountSum2000 + innerAmountSum4000,
-        sum24HourIncome: sum24HourIncome,
+        allpro: data122, sum24HourIncome: sum24HourIncome,
       }
     });
   } catch (error) {
