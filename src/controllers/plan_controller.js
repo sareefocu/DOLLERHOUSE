@@ -610,14 +610,550 @@ const getPlanController = async (req, res) => {
         }
 
         // Calculate innerAmountSum for each amount
-        let innerAmountSum20 = await calculateInnerAmountSum(5, ref);
-        let innerAmountSum40 = await calculateInnerAmountSum(10, ref40);
-        let innerAmountSum100 = await calculateInnerAmountSum(10, ref100);
-        let innerAmountSum200 = await calculateInnerAmountSum(10, ref200);
-        let innerAmountSum500 = await calculateInnerAmountSum(20, ref500);
-        let innerAmountSum1000 = await calculateInnerAmountSum(50, ref1000);
-        let innerAmountSum2000 = await calculateInnerAmountSum(100, ref2000);
-        let innerAmountSum4000 = await calculateInnerAmountSum(200, ref4000);
+        let h520 = await ref.aggregate([
+            {
+                $match: {
+                    refId: resp.wallet_id,
+                },
+            },
+            {
+                $graphLookup: {
+                    from: "refs",
+                    startWith: "$refId",
+                    connectFromField: "refId",
+                    depthField: "depthleval",
+                    maxDepth: 5,
+                    connectToField: "supporterId",
+                    as: "referBY",
+                },
+            },
+            {
+                $lookup: {
+                    from: "plan_buyeds",
+                    localField: "referBY.refId",
+                    foreignField: "wallet_id",
+                    as: "result",
+                },
+            },
+            {
+                $addFields: {
+                    referBY: {
+                        $map: {
+                            input: "$referBY",
+                            as: "refer",
+                            in: {
+                                $mergeObjects: [
+                                    "$$refer",
+                                    {
+                                        result: {
+                                            $filter: {
+                                                input: "$result",
+                                                as: "res",
+                                                cond: {
+                                                    $eq: [
+                                                        "$$res.wallet_id",
+                                                        "$$refer.refId",
+                                                    ],
+                                                },
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                $project: {
+                    result: 0, // Optionally remove the 'result' field from the output
+                },
+            },
+        ]
+        )
+        let innerAmountSum20 = 0;
+        h520.forEach(item => {
+            item.referBY.forEach(refer => {
+                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                innerAmountSum20 += 5 * parse / 100;
+            });
+        });
+        let h540 = await ref40.aggregate([
+            {
+                $match: {
+                    refId: resp.wallet_id,
+                },
+            },
+            {
+                $graphLookup: {
+                    from: "ref40",
+                    startWith: "$refId",
+                    connectFromField: "refId",
+                    depthField: "depthleval",
+                    maxDepth: 5,
+                    connectToField: "supporterId",
+                    as: "referBY",
+                },
+            },
+            {
+                $lookup: {
+                    from: "plan_buyeds",
+                    localField: "referBY.refId",
+                    foreignField: "wallet_id",
+                    as: "result",
+                },
+            },
+            {
+                $addFields: {
+                    referBY: {
+                        $map: {
+                            input: "$referBY",
+                            as: "refer",
+                            in: {
+                                $mergeObjects: [
+                                    "$$refer",
+                                    {
+                                        result: {
+                                            $filter: {
+                                                input: "$result",
+                                                as: "res",
+                                                cond: {
+                                                    $eq: [
+                                                        "$$res.wallet_id",
+                                                        "$$refer.refId",
+                                                    ],
+                                                },
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                $project: {
+                    result: 0, // Optionally remove the 'result' field from the output
+                },
+            },
+        ]
+        )
+        let innerAmountSum40 = 0;
+        h540.forEach(item => {
+            item.referBY.forEach(refer => {
+                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                innerAmountSum40 += 10 * parse / 100;
+            });
+        });
+        let h5100 = await ref100.aggregate([
+            {
+                $match: {
+                    refId: resp.wallet_id,
+                },
+            },
+            {
+                $graphLookup: {
+                    from: "ref100",
+                    startWith: "$refId",
+                    connectFromField: "refId",
+                    depthField: "depthleval",
+                    maxDepth: 5,
+                    connectToField: "supporterId",
+                    as: "referBY",
+                },
+            },
+            {
+                $lookup: {
+                    from: "plan_buyeds",
+                    localField: "referBY.refId",
+                    foreignField: "wallet_id",
+                    as: "result",
+                },
+            },
+            {
+                $addFields: {
+                    referBY: {
+                        $map: {
+                            input: "$referBY",
+                            as: "refer",
+                            in: {
+                                $mergeObjects: [
+                                    "$$refer",
+                                    {
+                                        result: {
+                                            $filter: {
+                                                input: "$result",
+                                                as: "res",
+                                                cond: {
+                                                    $eq: [
+                                                        "$$res.wallet_id",
+                                                        "$$refer.refId",
+                                                    ],
+                                                },
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                $project: {
+                    result: 0, // Optionally remove the 'result' field from the output
+                },
+            },
+        ]
+        )
+        let innerAmountSum100 = 0;
+        h5100.forEach(item => {
+            item.referBY.forEach(refer => {
+                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                innerAmountSum100 += 10 * parse / 100;
+            });
+        });
+        let h5200 = await ref200.aggregate([
+            {
+                $match: {
+                    refId: resp.wallet_id,
+                },
+            },
+            {
+                $graphLookup: {
+                    from: "ref200",
+                    startWith: "$refId",
+                    connectFromField: "refId",
+                    depthField: "depthleval",
+                    maxDepth: 5,
+                    connectToField: "supporterId",
+                    as: "referBY",
+                },
+            },
+            {
+                $lookup: {
+                    from: "plan_buyeds",
+                    localField: "referBY.refId",
+                    foreignField: "wallet_id",
+                    as: "result",
+                },
+            },
+            {
+                $addFields: {
+                    referBY: {
+                        $map: {
+                            input: "$referBY",
+                            as: "refer",
+                            in: {
+                                $mergeObjects: [
+                                    "$$refer",
+                                    {
+                                        result: {
+                                            $filter: {
+                                                input: "$result",
+                                                as: "res",
+                                                cond: {
+                                                    $eq: [
+                                                        "$$res.wallet_id",
+                                                        "$$refer.refId",
+                                                    ],
+                                                },
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                $project: {
+                    result: 0, // Optionally remove the 'result' field from the output
+                },
+            },
+        ]
+        )
+        let innerAmountSum200 = 0;
+        h5200.forEach(item => {
+            item.referBY.forEach(refer => {
+                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                innerAmountSum200 += 10 * parse / 100;
+            });
+        });
+        let h5500 = await ref500.aggregate([
+            {
+                $match: {
+                    refId: resp.wallet_id,
+                },
+            },
+            {
+                $graphLookup: {
+                    from: "ref500",
+                    startWith: "$refId",
+                    connectFromField: "refId",
+                    depthField: "depthleval",
+                    maxDepth: 5,
+                    connectToField: "supporterId",
+                    as: "referBY",
+                },
+            },
+            {
+                $lookup: {
+                    from: "plan_buyeds",
+                    localField: "referBY.refId",
+                    foreignField: "wallet_id",
+                    as: "result",
+                },
+            },
+            {
+                $addFields: {
+                    referBY: {
+                        $map: {
+                            input: "$referBY",
+                            as: "refer",
+                            in: {
+                                $mergeObjects: [
+                                    "$$refer",
+                                    {
+                                        result: {
+                                            $filter: {
+                                                input: "$result",
+                                                as: "res",
+                                                cond: {
+                                                    $eq: [
+                                                        "$$res.wallet_id",
+                                                        "$$refer.refId",
+                                                    ],
+                                                },
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                $project: {
+                    result: 0, // Optionally remove the 'result' field from the output
+                },
+            },
+        ]
+        )
+        let innerAmountSum500 = 0;
+        h5500.forEach(item => {
+            item.referBY.forEach(refer => {
+                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                innerAmountSum500 += 20 * parse / 100;
+            });
+        });
+        let h51000 = await ref1000.aggregate([
+            {
+                $match: {
+                    refId: resp.wallet_id,
+                },
+            },
+            {
+                $graphLookup: {
+                    from: "ref1000",
+                    startWith: "$refId",
+                    connectFromField: "refId",
+                    depthField: "depthleval",
+                    maxDepth: 5,
+                    connectToField: "supporterId",
+                    as: "referBY",
+                },
+            },
+            {
+                $lookup: {
+                    from: "plan_buyeds",
+                    localField: "referBY.refId",
+                    foreignField: "wallet_id",
+                    as: "result",
+                },
+            },
+            {
+                $addFields: {
+                    referBY: {
+                        $map: {
+                            input: "$referBY",
+                            as: "refer",
+                            in: {
+                                $mergeObjects: [
+                                    "$$refer",
+                                    {
+                                        result: {
+                                            $filter: {
+                                                input: "$result",
+                                                as: "res",
+                                                cond: {
+                                                    $eq: [
+                                                        "$$res.wallet_id",
+                                                        "$$refer.refId",
+                                                    ],
+                                                },
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                $project: {
+                    result: 0, // Optionally remove the 'result' field from the output
+                },
+            },
+        ]
+        )
+        let innerAmountSum1000 = 0;
+        h51000.forEach(item => {
+            item.referBY.forEach(refer => {
+                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                innerAmountSum1000 += 50 * parse / 100;
+            });
+        });
+        let h52000 = await ref2000.aggregate([
+            {
+                $match: {
+                    refId: resp.wallet_id,
+                },
+            },
+            {
+                $graphLookup: {
+                    from: "ref2000",
+                    startWith: "$refId",
+                    connectFromField: "refId",
+                    depthField: "depthleval",
+                    maxDepth: 5,
+                    connectToField: "supporterId",
+                    as: "referBY",
+                },
+            },
+            {
+                $lookup: {
+                    from: "plan_buyeds",
+                    localField: "referBY.refId",
+                    foreignField: "wallet_id",
+                    as: "result",
+                },
+            },
+            {
+                $addFields: {
+                    referBY: {
+                        $map: {
+                            input: "$referBY",
+                            as: "refer",
+                            in: {
+                                $mergeObjects: [
+                                    "$$refer",
+                                    {
+                                        result: {
+                                            $filter: {
+                                                input: "$result",
+                                                as: "res",
+                                                cond: {
+                                                    $eq: [
+                                                        "$$res.wallet_id",
+                                                        "$$refer.refId",
+                                                    ],
+                                                },
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                $project: {
+                    result: 0, // Optionally remove the 'result' field from the output
+                },
+            },
+        ]
+        )
+        let innerAmountSum2000 = 0;
+        h52000.forEach(item => {
+            item.referBY.forEach(refer => {
+                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                innerAmountSum2000 += 100 * parse / 100;
+            });
+        });
+        let h54000 = await ref4000.aggregate([
+            {
+                $match: {
+                    refId: resp.wallet_id,
+                },
+            },
+            {
+                $graphLookup: {
+                    from: "ref4000",
+                    startWith: "$refId",
+                    connectFromField: "refId",
+                    depthField: "depthleval",
+                    maxDepth: 5,
+                    connectToField: "supporterId",
+                    as: "referBY",
+                },
+            },
+            {
+                $lookup: {
+                    from: "plan_buyeds",
+                    localField: "referBY.refId",
+                    foreignField: "wallet_id",
+                    as: "result",
+                },
+            },
+            {
+                $addFields: {
+                    referBY: {
+                        $map: {
+                            input: "$referBY",
+                            as: "refer",
+                            in: {
+                                $mergeObjects: [
+                                    "$$refer",
+                                    {
+                                        result: {
+                                            $filter: {
+                                                input: "$result",
+                                                as: "res",
+                                                cond: {
+                                                    $eq: [
+                                                        "$$res.wallet_id",
+                                                        "$$refer.refId",
+                                                    ],
+                                                },
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+            {
+                $project: {
+                    result: 0, // Optionally remove the 'result' field from the output
+                },
+            },
+        ]
+        )
+        let innerAmountSum4000 = 0;
+        h54000.forEach(item => {
+            item.referBY.forEach(refer => {
+                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                innerAmountSum4000 += 200 * parse / 100;
+            });
+        });
         let totalSlotSum = (
             memberDetails12?.house_reward?.filter(item => item.amount === 20).reduce((sum, item) => sum + item.house_reward, 0) -
             memberDetails12?.house_reward?.filter(item => item.amount === 20 && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
@@ -671,14 +1207,14 @@ const getPlanController = async (req, res) => {
             data: resp,
             data1: data1,
             data2: {
-                r20: calculatePercentageBasedOnLength(missmemberDetails12.length, [2, 6, 14, 30], [0, 10, 20, 20], 50),
-                r40: calculatePercentageBasedOnLength(missmemberDetails123.length, [2, 6, 14, 30], [0, 10, 20, 20], 50),
-                r100: calculatePercentageBasedOnLength(missmemberDetails1234.length, [2, 6, 14, 30], [0, 10, 20, 20], 50),
-                r200: calculatePercentageBasedOnLength(missmemberDetails12345.length, [2, 6, 14, 30], [0, 10, 20, 20], 50),
-                r500: calculatePercentageBasedOnLength(missmemberDetails123456.length, [2, 6, 14, 30], [0, 10, 20, 20], 50),
-                r1000: calculatePercentageBasedOnLength(missmemberDetails1234567.length, [2, 6, 14, 30], [0, 10, 20, 20], 50),
-                r2000: calculatePercentageBasedOnLength(missmemberDetails12345678.length, [2, 6, 14, 30], [0, 10, 20, 20], 50),
-                r4000: calculatePercentageBasedOnLength(missmemberDetails123456789.length, [2, 6, 14, 30], [0, 10, 20, 20], 50),
+                r20: memberDetails12?.house_reward?.filter(item => item.amount == 20).length,
+                r40: memberDetails12?.house_reward?.filter(item => item.amount == 40).length,
+                r100: memberDetails12?.house_reward?.filter(item => item.amount == 100).length,
+                r200: memberDetails12?.house_reward?.filter(item => item.amount == 200).length,
+                r500: memberDetails12?.house_reward?.filter(item => item.amount == 500).length,
+                r1000: memberDetails12?.house_reward?.filter(item => item.amount == 1000).length,
+                r2000: memberDetails12?.house_reward?.filter(item => item.amount == 2000).length,
+                r4000: memberDetails12?.house_reward?.filter(item => item.amount == 4000).length,
             },
             data3: {
                 h120all: memberDetails12?.house_reward?.filter(item => item.amount == 20).reduce((sum, item) => sum + item.house_reward, 0),
