@@ -1200,23 +1200,7 @@ const getPlanController = async (req, res) => {
             innerAmountSum2000 +
             innerAmountSum4000
         );
-
-        return res.send({
-            message: "Your Plan fetched successfully",
-            status: "Ok",
-            data: resp,
-            data1: data1,
-            data2: {
-                r20: memberDetails12?.house_reward?.filter(item => item.amount == 20).length,
-                r40: memberDetails12?.house_reward?.filter(item => item.amount == 40).length,
-                r100: memberDetails12?.house_reward?.filter(item => item.amount == 100).length,
-                r200: memberDetails12?.house_reward?.filter(item => item.amount == 200).length,
-                r500: memberDetails12?.house_reward?.filter(item => item.amount == 500).length,
-                r1000: memberDetails12?.house_reward?.filter(item => item.amount == 1000).length,
-                r2000: memberDetails12?.house_reward?.filter(item => item.amount == 2000).length,
-                r4000: memberDetails12?.house_reward?.filter(item => item.amount == 4000).length,
-            },
-            data3: {
+ let data3 = {
                 h120all: memberDetails12?.house_reward?.filter(item => item.amount == 20).reduce((sum, item) => sum + item.house_reward, 0),
                 h120miss: memberDetails12?.house_reward?.filter(item => item.amount == 20 && item.status !==  null).reduce((sum, item) => sum + item.house_reward, 0),
                 h140all: memberDetails12?.house_reward?.filter(item => item.amount == 40).reduce((sum, item) => sum + item.house_reward, 0),
@@ -1257,7 +1241,24 @@ const getPlanController = async (req, res) => {
                 innerAmountSum1000: innerAmountSum1000,
                 innerAmountSum2000: innerAmountSum2000,
                 innerAmountSum4000: innerAmountSum4000,
-            }, data4: {
+            }
+        return res.send({
+            message: "Your Plan fetched successfully",
+            status: "Ok",
+            data: resp,
+            data1: data1,
+            data2: {
+                r20: memberDetails12?.house_reward?.filter(item => item.amount == 20).length,
+                r40: memberDetails12?.house_reward?.filter(item => item.amount == 40).length,
+                r100: memberDetails12?.house_reward?.filter(item => item.amount == 100).length,
+                r200: memberDetails12?.house_reward?.filter(item => item.amount == 200).length,
+                r500: memberDetails12?.house_reward?.filter(item => item.amount == 500).length,
+                r1000: memberDetails12?.house_reward?.filter(item => item.amount == 1000).length,
+                r2000: memberDetails12?.house_reward?.filter(item => item.amount == 2000).length,
+                r4000: memberDetails12?.house_reward?.filter(item => item.amount == 4000).length,
+            },data3
+          , data4: {
+profit:data3.h120all +data3.h140all +data3.h1100all+data3.h1200all+data3.h1500all+data3.h11000all+data3.h12000all+data3.h14000all+data3.h1520all+data3.h1540all+data3.h15100all+data3.h15200all+data3.h15500all+data3.h151000all+data3.h152000all+data3.h154000all
                 totalSlotSum: totalSlotSum,
                 sum24HourIncome: sum24HourIncome
             }
