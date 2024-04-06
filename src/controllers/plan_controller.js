@@ -512,103 +512,9 @@ const getPlanController = async (req, res) => {
             r4000: memberDetails12?.house_reward?.filter(item => item.amount == 4000).length,
         };
 
-        const fetchMissedMemberDetails = async (collection, amount) => {
-            try {
-                const result = await collection.aggregate([
-                    {
-                        $match: {
-                            misseduser: resp.wallet_id,
-                            // createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } // Filter for last 24 hours
-                        }
-                    }
-                ]).toArray();
-                return result;
-            } catch (error) {
-                console.error("Error fetching missed member details:", error);
-                return [];
-            }
-        };
-
-        const missmemberDetails12 = await fetchMissedMemberDetails(ref, 20);
-        const missmemberDetails123 = await fetchMissedMemberDetails(ref40, 40);
-        const missmemberDetails1234 = await fetchMissedMemberDetails(ref100, 100);
-        const missmemberDetails12345 = await fetchMissedMemberDetails(ref200, 200);
-        const missmemberDetails123456 = await fetchMissedMemberDetails(ref500, 500);
-        const missmemberDetails1234567 = await fetchMissedMemberDetails(ref1000, 1000);
-        const missmemberDetails12345678 = await fetchMissedMemberDetails(ref2000, 2000);
-        const missmemberDetails123456789 = await fetchMissedMemberDetails(ref4000, 4000);
-        async function calculateInnerAmountSum(amount, data) {
-            let data1 = await data.aggregate([
-                {
-                    $match: {
-                        refId: resp.wallet_id,
-                    },
-                },
-                {
-                    $graphLookup: {
-                        from: data.toString(),
-                        startWith: "$refId",
-                        connectFromField: "refId",
-                        depthField: "depthleval",
-                        maxDepth: 5,
-                        connectToField: "supporterId",
-                        as: "referBY",
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "plan_buyeds",
-                        localField: "referBY.refId",
-                        foreignField: "wallet_id",
-                        as: "result",
-                    },
-                },
-                {
-                    $addFields: {
-                        referBY: {
-                            $map: {
-                                input: "$referBY",
-                                as: "refer",
-                                in: {
-                                    $mergeObjects: [
-                                        "$$refer",
-                                        {
-                                            result: {
-                                                $filter: {
-                                                    input: "$result",
-                                                    as: "res",
-                                                    cond: {
-                                                        $eq: [
-                                                            "$$res.wallet_id",
-                                                            "$$refer.refId",
-                                                        ],
-                                                    },
-                                                },
-                                            },
-                                        },
-                                    ],
-                                },
-                            },
-                        },
-                    },
-                },
-                {
-                    $project: {
-                        result: 0, // Optionally remove the 'result' field from the output
-                    },
-                },
-            ]);
-
-            let sum = 0;
-            data1.forEach(item => {
-                item.referBY.forEach(refer => {
-                    let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0;
-                    sum += amount * parse / 100;
-                });
-            });
-            return sum;
-        }
-
+        const now = new Date(); // Get current time
+        const currentTimestamp = new Date().getTime();
+        const twentyFourHoursAgo = currentTimestamp - (24 * 60 * 60 * 1000);
         // Calculate innerAmountSum for each amount
         let h520 = await ref.aggregate([
             {
@@ -672,10 +578,16 @@ const getPlanController = async (req, res) => {
         ]
         )
         let innerAmountSum20 = 0;
+        let innerAmount24Sum20 = 0;
         h520.forEach(item => {
             item.referBY.forEach(refer => {
                 let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
                 innerAmountSum20 += 5 * parse / 100;
+                const incomeTimestamp = new Date(refer.createdAt);
+                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                    let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                    innerAmount24Sum20 += 5 * parse / 100;
+                }
             });
         });
         let h540 = await ref40.aggregate([
@@ -740,10 +652,16 @@ const getPlanController = async (req, res) => {
         ]
         )
         let innerAmountSum40 = 0;
+        let innerAmount24Sum40 = 0;
         h540.forEach(item => {
             item.referBY.forEach(refer => {
                 let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
                 innerAmountSum40 += 10 * parse / 100;
+                const incomeTimestamp = new Date(refer.createdAt);
+                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                    let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                    innerAmount24Sum40 += 10 * parse / 100;
+                }
             });
         });
         let h5100 = await ref100.aggregate([
@@ -808,10 +726,16 @@ const getPlanController = async (req, res) => {
         ]
         )
         let innerAmountSum100 = 0;
+        let innerAmount24Sum100 = 0;
         h5100.forEach(item => {
             item.referBY.forEach(refer => {
                 let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
                 innerAmountSum100 += 10 * parse / 100;
+                const incomeTimestamp = new Date(refer.createdAt);
+                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                    let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                    innerAmount24Sum100 += 10 * parse / 100;
+                }
             });
         });
         let h5200 = await ref200.aggregate([
@@ -876,10 +800,16 @@ const getPlanController = async (req, res) => {
         ]
         )
         let innerAmountSum200 = 0;
+        let innerAmount24Sum200 = 0;
         h5200.forEach(item => {
             item.referBY.forEach(refer => {
                 let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
                 innerAmountSum200 += 10 * parse / 100;
+                const incomeTimestamp = new Date(refer.createdAt);
+                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                    let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                    innerAmount24Sum200 += 10 * parse / 100;
+                }
             });
         });
         let h5500 = await ref500.aggregate([
@@ -944,10 +874,16 @@ const getPlanController = async (req, res) => {
         ]
         )
         let innerAmountSum500 = 0;
+        let innerAmount24Sum500 = 0;
         h5500.forEach(item => {
             item.referBY.forEach(refer => {
                 let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
                 innerAmountSum500 += 20 * parse / 100;
+                const incomeTimestamp = new Date(refer.createdAt);
+                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                    let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                    innerAmount24Sum500 += 20 * parse / 100;
+                }
             });
         });
         let h51000 = await ref1000.aggregate([
@@ -1012,10 +948,16 @@ const getPlanController = async (req, res) => {
         ]
         )
         let innerAmountSum1000 = 0;
+        let innerAmount24Sum1000 = 0;
         h51000.forEach(item => {
             item.referBY.forEach(refer => {
                 let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
                 innerAmountSum1000 += 50 * parse / 100;
+                const incomeTimestamp = new Date(refer.createdAt);
+                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                    let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                    innerAmount24Sum1000 += 50 * parse / 100;
+                }
             });
         });
         let h52000 = await ref2000.aggregate([
@@ -1080,10 +1022,17 @@ const getPlanController = async (req, res) => {
         ]
         )
         let innerAmountSum2000 = 0;
+        let innerAmount24Sum2000 = 0;
         h52000.forEach(item => {
             item.referBY.forEach(refer => {
                 let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
                 innerAmountSum2000 += 100 * parse / 100;
+
+                const incomeTimestamp = new Date(refer.createdAt);
+                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                    let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                    innerAmount24Sum2000 += 100 * parse / 100;
+                }
             });
         });
         let h54000 = await ref4000.aggregate([
@@ -1148,10 +1097,16 @@ const getPlanController = async (req, res) => {
         ]
         )
         let innerAmountSum4000 = 0;
+        let innerAmount24Sum4000 = 0;
         h54000.forEach(item => {
             item.referBY.forEach(refer => {
                 let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
                 innerAmountSum4000 += 200 * parse / 100;
+                const incomeTimestamp = new Date(refer.createdAt);
+                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                    let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                    innerAmount24Sum4000 += 200 * parse / 100;
+                }
             });
         });
         let totalSlotSum = (
@@ -1189,6 +1144,49 @@ const getPlanController = async (req, res) => {
             memberDetails12?.level_reward?.filter(item => item.amount === 4000 && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0)
         );
 
+
+        // Timestamp of 24 hours ago
+        let totalSlotSum24 = (
+            memberDetails12?.house_reward?.filter(item => item.amount === 20 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+            memberDetails12?.house_reward?.filter(item => item.amount === 20 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+            memberDetails12?.level_reward?.filter(item => item.amount === 20 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
+            memberDetails12?.level_reward?.filter(item => item.amount === 20 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
+            memberDetails12?.house_reward?.filter(item => item.amount === 40 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+            memberDetails12?.house_reward?.filter(item => item.amount === 40 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+            memberDetails12?.level_reward?.filter(item => item.amount === 40 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
+            memberDetails12?.level_reward?.filter(item => item.amount === 40 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
+            memberDetails12?.house_reward?.filter(item => item.amount === 100 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+            memberDetails12?.house_reward?.filter(item => item.amount === 100 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+            memberDetails12?.level_reward?.filter(item => item.amount === 100 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
+            memberDetails12?.level_reward?.filter(item => item.amount === 100 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
+            memberDetails12?.house_reward?.filter(item => item.amount === 200 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+            memberDetails12?.house_reward?.filter(item => item.amount === 200 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+            memberDetails12?.level_reward?.filter(item => item.amount === 200 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
+            memberDetails12?.level_reward?.filter(item => item.amount === 200 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
+            memberDetails12?.house_reward?.filter(item => item.amount === 500 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+            memberDetails12?.house_reward?.filter(item => item.amount === 500 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+            memberDetails12?.level_reward?.filter(item => item.amount === 500 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
+            memberDetails12?.level_reward?.filter(item => item.amount === 500 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
+            memberDetails12?.house_reward?.filter(item => item.amount === 1000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+            memberDetails12?.house_reward?.filter(item => item.amount === 1000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+            memberDetails12?.level_reward?.filter(item => item.amount === 1000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
+            memberDetails12?.level_reward?.filter(item => item.amount === 1000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
+            memberDetails12?.house_reward?.filter(item => item.amount === 2000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+            memberDetails12?.house_reward?.filter(item => item.amount === 2000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+            memberDetails12?.level_reward?.filter(item => item.amount === 2000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
+            memberDetails12?.level_reward?.filter(item => item.amount === 2000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
+            memberDetails12?.house_reward?.filter(item => item.amount === 4000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+            memberDetails12?.house_reward?.filter(item => item.amount === 4000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+            memberDetails12?.level_reward?.filter(item => item.amount === 4000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
+            memberDetails12?.level_reward?.filter(item => item.amount === 4000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0)
+        );
+        // Current timestamp
+
+        // Filter data within the last 24 hours
+
+
+        // Calculate the total rewards for each specific amount
+
         // Calculate the sum of 24-hour income
         let sum24HourIncome = (
             innerAmountSum20 +
@@ -1200,23 +1198,39 @@ const getPlanController = async (req, res) => {
             innerAmountSum2000 +
             innerAmountSum4000
         );
- let data3 = {
-                h120all: memberDetails12?.house_reward?.filter(item => item.amount == 20 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h120miss: memberDetails12?.house_reward?.filter(item => item.amount == 20 && item.status !==  undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h140all: memberDetails12?.house_reward?.filter(item => item.amount == 40 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h140miss: memberDetails12?.house_reward?.filter(item => item.amount == 40 && item.status !==  undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h1100all: memberDetails12?.house_reward?.filter(item => item.amount == 100 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h1100miss: memberDetails12?.house_reward?.filter(item => item.amount == 100 && item.status !==  undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h1200all: memberDetails12?.house_reward?.filter(item => item.amount == 200 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h1200miss: memberDetails12?.house_reward?.filter(item => item.amount == 200 && item.status !==  undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h1500all: memberDetails12?.house_reward?.filter(item => item.amount == 500 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h1500miss: memberDetails12?.house_reward?.filter(item => item.amount == 500 && item.status !==  undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h11000all: memberDetails12?.house_reward?.filter(item => item.amount == 1000 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h11000miss: memberDetails12?.house_reward?.filter(item => item.amount == 1000 && item.status !==  undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h12000all: memberDetails12?.house_reward?.filter(item => item.amount == 2000 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h12000miss: memberDetails12?.house_reward?.filter(item => item.amount == 2000 && item.status !==  undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h14000all: memberDetails12?.house_reward?.filter(item => item.amount == 4000 && item.status === undefined ).reduce((sum, item) => sum + item.house_reward, 0),
-                h14000miss: memberDetails12?.house_reward?.filter(item => item.amount == 4000 && item.status !==  undefined).reduce((sum, item) => sum + item.house_reward, 0),
+
+        return res.send({
+            message: "Your Plan fetched successfully",
+            status: "Ok",
+            data: resp,
+            data1: data1,
+            data2: {
+                r20: memberDetails12?.house_reward?.filter(item => item.amount == 20).length,
+                r40: memberDetails12?.house_reward?.filter(item => item.amount == 40).length,
+                r100: memberDetails12?.house_reward?.filter(item => item.amount == 100).length,
+                r200: memberDetails12?.house_reward?.filter(item => item.amount == 200).length,
+                r500: memberDetails12?.house_reward?.filter(item => item.amount == 500).length,
+                r1000: memberDetails12?.house_reward?.filter(item => item.amount == 1000).length,
+                r2000: memberDetails12?.house_reward?.filter(item => item.amount == 2000).length,
+                r4000: memberDetails12?.house_reward?.filter(item => item.amount == 4000).length,
+            },
+            data3: {
+                h120all: memberDetails12?.house_reward?.filter(item => item.amount == 20).reduce((sum, item) => sum + item.house_reward, 0),
+                h120miss: memberDetails12?.house_reward?.filter(item => item.amount == 20 && item.status == null).reduce((sum, item) => sum + item.house_reward, 0),
+                h140all: memberDetails12?.house_reward?.filter(item => item.amount == 40).reduce((sum, item) => sum + item.house_reward, 0),
+                h140miss: memberDetails12?.house_reward?.filter(item => item.amount == 40 && item.status == null).reduce((sum, item) => sum + item.house_reward, 0),
+                h1100all: memberDetails12?.house_reward?.filter(item => item.amount == 100).reduce((sum, item) => sum + item.house_reward, 0),
+                h1100miss: memberDetails12?.house_reward?.filter(item => item.amount == 100 && item.status == null).reduce((sum, item) => sum + item.house_reward, 0),
+                h1200all: memberDetails12?.house_reward?.filter(item => item.amount == 200).reduce((sum, item) => sum + item.house_reward, 0),
+                h1200miss: memberDetails12?.house_reward?.filter(item => item.amount == 200 && item.status == null).reduce((sum, item) => sum + item.house_reward, 0),
+                h1500all: memberDetails12?.house_reward?.filter(item => item.amount == 500).reduce((sum, item) => sum + item.house_reward, 0),
+                h1500miss: memberDetails12?.house_reward?.filter(item => item.amount == 500 && item.status == null).reduce((sum, item) => sum + item.house_reward, 0),
+                h11000all: memberDetails12?.house_reward?.filter(item => item.amount == 1000).reduce((sum, item) => sum + item.house_reward, 0),
+                h11000miss: memberDetails12?.house_reward?.filter(item => item.amount == 1000 && item.status == null).reduce((sum, item) => sum + item.house_reward, 0),
+                h12000all: memberDetails12?.house_reward?.filter(item => item.amount == 2000).reduce((sum, item) => sum + item.house_reward, 0),
+                h12000miss: memberDetails12?.house_reward?.filter(item => item.amount == 2000 && item.status == null).reduce((sum, item) => sum + item.house_reward, 0),
+                h14000all: memberDetails12?.house_reward?.filter(item => item.amount == 4000).reduce((sum, item) => sum + item.house_reward, 0),
+                h14000miss: memberDetails12?.house_reward?.filter(item => item.amount == 4000 && item.status == null).reduce((sum, item) => sum + item.house_reward, 0),
                 h1520all: memberDetails12?.level_reward?.filter(item => item.amount == 20).reduce((sum, item) => sum + item.reward, 0),
                 h1520miss: 0,
                 h1540all: memberDetails12?.level_reward?.filter(item => item.amount == 40).reduce((sum, item) => sum + item.reward, 0),
@@ -1241,26 +1255,9 @@ const getPlanController = async (req, res) => {
                 innerAmountSum1000: innerAmountSum1000,
                 innerAmountSum2000: innerAmountSum2000,
                 innerAmountSum4000: innerAmountSum4000,
-            }
-        return res.send({
-            message: "Your Plan fetched successfully",
-            status: "Ok",
-            data: resp,
-            data1: data1,
-            data2: {
-                r20: memberDetails12?.house_reward?.filter(item => item.amount == 20).length,
-                r40: memberDetails12?.house_reward?.filter(item => item.amount == 40).length,
-                r100: memberDetails12?.house_reward?.filter(item => item.amount == 100).length,
-                r200: memberDetails12?.house_reward?.filter(item => item.amount == 200).length,
-                r500: memberDetails12?.house_reward?.filter(item => item.amount == 500).length,
-                r1000: memberDetails12?.house_reward?.filter(item => item.amount == 1000).length,
-                r2000: memberDetails12?.house_reward?.filter(item => item.amount == 2000).length,
-                r4000: memberDetails12?.house_reward?.filter(item => item.amount == 4000).length,
-            },data3
-          , data4: {
-profit:data3.h120all +data3.h140all +data3.h1100all+data3.h1200all+data3.h1500all+data3.h11000all+data3.h12000all+data3.h14000all+data3.h1520all+data3.h1540all+data3.h15100all+data3.h15200all+data3.h15500all+data3.h151000all+data3.h152000all+data3.h154000all+data3.innerAmountSum20+data3.innerAmountSum40+data3.innerAmountSum100+data3.innerAmountSum200+data3.innerAmountSum500+data3.innerAmountSum1000+data3.innerAmountSum2000+data3.innerAmountSum4000,
-                totalSlotSum: totalSlotSum,
-                sum24HourIncome: sum24HourIncome
+            }, data4: {
+                totalSlotSum: totalSlotSum + innerAmountSum20 + innerAmountSum40 + innerAmountSum100 + innerAmountSum200 + innerAmountSum500 + innerAmountSum1000 + innerAmountSum2000 + innerAmountSum4000,
+                totalSlotSum240: totalSlotSum24 + innerAmount24Sum20 + innerAmount24Sum40 + innerAmount24Sum100 + innerAmount24Sum200 + innerAmount24Sum500 + innerAmount24Sum1000 + innerAmount24Sum2000 + innerAmount24Sum4000,
             }
         });
     } catch (error) {
