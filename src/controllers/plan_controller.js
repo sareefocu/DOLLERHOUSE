@@ -1222,13 +1222,7 @@ const getPlanController = async (req, res) => {
                         return sum;
                     }
                 }, 0),
-                h120miss: memberDetails12?.house_reward?.filter(item => item.amount == 20 && item.status === undefined).reduce((sum, item) => {
-                    if (item.status === undefined) {
-                        return sum + item.house_reward;
-                    } else {
-                        return sum;
-                    }
-                }, 0),
+                h120miss: 0,
                 h140all: memberDetails12?.house_reward?.filter(item => item.amount == 40).reduce((sum, item) => {
                     if (item.status === undefined) {
                         return sum + item.house_reward;
