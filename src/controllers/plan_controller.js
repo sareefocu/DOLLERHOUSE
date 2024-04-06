@@ -1215,22 +1215,118 @@ const getPlanController = async (req, res) => {
                 r4000: memberDetails12?.house_reward?.filter(item => item.amount == 4000).length,
             },
             data3: {
-                h120all: memberDetails12?.house_reward?.filter(item => item.amount == 20).reduce((sum, item) => sum + item.house_reward, 0),
-                h120miss: memberDetails12?.house_reward?.filter(item => item.amount == 20 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h140all: memberDetails12?.house_reward?.filter(item => item.amount == 40).reduce((sum, item) => sum + item.house_reward, 0),
-                h140miss: memberDetails12?.house_reward?.filter(item => item.amount == 40 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h1100all: memberDetails12?.house_reward?.filter(item => item.amount == 100).reduce((sum, item) => sum + item.house_reward, 0),
-                h1100miss: memberDetails12?.house_reward?.filter(item => item.amount == 100 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h1200all: memberDetails12?.house_reward?.filter(item => item.amount == 200).reduce((sum, item) => sum + item.house_reward, 0),
-                h1200miss: memberDetails12?.house_reward?.filter(item => item.amount == 200 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h1500all: memberDetails12?.house_reward?.filter(item => item.amount == 500).reduce((sum, item) => sum + item.house_reward, 0),
-                h1500miss: memberDetails12?.house_reward?.filter(item => item.amount == 500 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h11000all: memberDetails12?.house_reward?.filter(item => item.amount == 1000).reduce((sum, item) => sum + item.house_reward, 0),
-                h11000miss: memberDetails12?.house_reward?.filter(item => item.amount == 1000 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h12000all: memberDetails12?.house_reward?.filter(item => item.amount == 2000).reduce((sum, item) => sum + item.house_reward, 0),
-                h12000miss: memberDetails12?.house_reward?.filter(item => item.amount == 2000 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
-                h14000all: memberDetails12?.house_reward?.filter(item => item.amount == 4000).reduce((sum, item) => sum + item.house_reward, 0),
-                h14000miss: memberDetails12?.house_reward?.filter(item => item.amount == 4000 && item.status === undefined).reduce((sum, item) => sum + item.house_reward, 0),
+                h120all: memberDetails12?.house_reward?.filter(item => item.amount == 20).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h120miss: memberDetails12?.house_reward?.filter(item => item.amount == 20 && item.status === undefined).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h140all: memberDetails12?.house_reward?.filter(item => item.amount == 40).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h140miss: memberDetails12?.house_reward?.filter(item => item.amount == 40 && item.status === undefined).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h1100all: memberDetails12?.house_reward?.filter(item => item.amount == 100).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h1100miss: memberDetails12?.house_reward?.filter(item => item.amount == 100 && item.status === undefined).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h1200all: memberDetails12?.house_reward?.filter(item => item.amount == 200).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h1200miss: memberDetails12?.house_reward?.filter(item => item.amount == 200 && item.status === undefined).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h1500all: memberDetails12?.house_reward?.filter(item => item.amount == 500).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h1500miss: memberDetails12?.house_reward?.filter(item => item.amount == 500 && item.status === undefined).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h11000all: memberDetails12?.house_reward?.filter(item => item.amount == 1000).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h11000miss: memberDetails12?.house_reward?.filter(item => item.amount == 1000 && item.status === undefined).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h12000all: memberDetails12?.house_reward?.filter(item => item.amount == 2000).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h12000miss: memberDetails12?.house_reward?.filter(item => item.amount == 2000 && item.status === undefined).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h14000all: memberDetails12?.house_reward?.filter(item => item.amount == 4000).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
+                h14000miss: memberDetails12?.house_reward?.filter(item => item.amount == 4000 && item.status === undefined).reduce((sum, item) => {
+                    if (item.status === undefined) {
+                        return sum + item.house_reward;
+                    } else {
+                        return sum;
+                    }
+                }, 0),
                 h1520all: memberDetails12?.level_reward?.filter(item => item.amount == 20).reduce((sum, item) => sum + item.reward, 0),
                 h1520miss: 0,
                 h1540all: memberDetails12?.level_reward?.filter(item => item.amount == 40).reduce((sum, item) => sum + item.reward, 0),
@@ -1255,7 +1351,8 @@ const getPlanController = async (req, res) => {
                 innerAmountSum1000: innerAmountSum1000,
                 innerAmountSum2000: innerAmountSum2000,
                 innerAmountSum4000: innerAmountSum4000,
-            }, data4: {
+            },
+            data4: {
                 totalSlotSum: totalSlotSum + innerAmountSum20 + innerAmountSum40 + innerAmountSum100 + innerAmountSum200 + innerAmountSum500 + innerAmountSum1000 + innerAmountSum2000 + innerAmountSum4000,
                 totalSlotSum240: totalSlotSum24 + innerAmount24Sum20 + innerAmount24Sum40 + innerAmount24Sum100 + innerAmount24Sum200 + innerAmount24Sum500 + innerAmount24Sum1000 + innerAmount24Sum2000 + innerAmount24Sum4000,
             }
