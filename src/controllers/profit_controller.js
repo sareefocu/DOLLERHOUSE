@@ -5,7 +5,46 @@ import planModel from "../models/plan_model.js";
 const logger = logHelper.getInstance({ appName: constants.app_name });
 const getTotalProfitController = async (req, res) => {
     try {
+        const now = new Date(); // Get current time
         let reward_details = await rewardModel.findOne({ user_id: req.query.userId })
+        const currentTimestamp = new Date().getTime();
+        const twentyFourHoursAgo = currentTimestamp - (24 * 60 * 60 * 1000);
+        let reward_details112 = await rewardModel.aggregate([{
+            $match: {
+                user_id: req.query.userId
+            }
+        },
+        {
+            $graphLookup: {
+                from: "reward_details",
+                startWith: "$wallet_id",
+                connectFromField: "wallet_id",
+                depthField: "depthleval",
+                connectToField: "refferal",
+                as: "referBY",
+            },
+        },
+        ])
+        let reward_details11233 = await rewardModel.aggregate([{
+            $match: {
+                user_id: req.query.userId
+            }
+        },
+        {
+            $graphLookup: {
+                from: "reward_details",
+                startWith: "$wallet_id",
+                connectFromField: "wallet_id",
+                depthField: "depthleval",
+                connectToField: "refferal",
+                restrictSearchWithMatch: { createdAt: { $gte: twentyFourHoursAgo } },
+                as: "referBY",
+            },
+        },
+        ])
+        let reward_details1 = await rewardModel.find({ refferal: reward_details.wallet_id })
+        const joinCount = await rewardModel.find({ refferal: reward_details.wallet_id, createdAt: { $gte: twentyFourHoursAgo } });
+
         if (!reward_details) {
             return res.send({ message: "Not Found any details" });
         }
@@ -48,10 +87,11 @@ const getTotalProfitController = async (req, res) => {
         });
         let resp = {
             overAllProfit: houseProfit + levelProfit,
-            directTeam: reward_details.invite,
+            directTeam: reward_details112[0].referBY.length,
+            directTeam112: reward_details112[0].referBY.length,
             recentProfit: houseProfitlatest + levelProfitlatest,
-            total_team: total,
-            recentTeam: latestteam.length + 2
+            total_team: joinCount.length,
+            recentTeam: reward_details1.length
         }
 
         res.send({ message: "find success all details", data: resp })
