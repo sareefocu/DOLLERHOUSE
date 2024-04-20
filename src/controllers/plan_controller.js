@@ -1110,76 +1110,43 @@ const getPlanController = async (req, res) => {
             });
         });
         let totalSlotSum = (
-            memberDetails12?.house_reward?.filter(item => item.amount === 20).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 20 && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 20).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 20 && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 40).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 40 && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 40).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 40 && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 100).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 100 && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 100).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 100 && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 200).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 200 && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 200).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 200 && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 500).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 500 && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 500).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 500 && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 1000).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 1000 && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 1000).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 1000 && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 2000).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 2000 && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 2000).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 2000 && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 4000).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 4000 && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 4000).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 4000 && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0)
+            memberDetails12?.house_reward?.reduce((sum, item) => sum + item.house_reward, 0) - memberDetails12?.house_reward.filter(item => item.status == undefined)?.reduce((sum, item) => sum + item.house_reward, 0)
         );
-
-
-        // Timestamp of 24 hours ago
+        let levelIncomeSum = (
+            memberDetails12?.level_reward?.reduce((sum, item) => sum + item.reward, 0) || 0
+        );
         let totalSlotSum24 = (
-            memberDetails12?.house_reward?.filter(item => item.amount === 20 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 20 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 20 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 20 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 40 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 40 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 40 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 40 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 100 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 100 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 100 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 100 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 200 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 200 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 200 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 200 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 500 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 500 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 500 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 500 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 1000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 1000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 1000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 1000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 2000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 2000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 2000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 2000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0) +
-            memberDetails12?.house_reward?.filter(item => item.amount === 4000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
-            memberDetails12?.house_reward?.filter(item => item.amount === 4000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
-            memberDetails12?.level_reward?.filter(item => item.amount === 4000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) -
-            memberDetails12?.level_reward?.filter(item => item.amount === 4000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.reward, 0)
+            memberDetails12?.house_reward?.filter(item => item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) - memberDetails12?.house_reward.filter(item => item.Time >= twentyFourHoursAgo && item.status == undefined)?.reduce((sum, item) => sum + item.house_reward, 0)
         );
+        let levelIncomeSum24 = (
+            memberDetails12?.level_reward?.filter(item => item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) || 0
+        );
+        // let totalSlotSum24 = (
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 20 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 20 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+        //     memberDetails12?.level_reward?.filter(item => item.amount === 20 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) +
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 40 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 40 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+        //     memberDetails12?.level_reward?.filter(item => item.amount === 40 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) +
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 100 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 100 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+        //     memberDetails12?.level_reward?.filter(item => item.amount === 100 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) +
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 200 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 200 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+        //     memberDetails12?.level_reward?.filter(item => item.amount === 200 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) +
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 500 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 500 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+        //     memberDetails12?.level_reward?.filter(item => item.amount === 500 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) +
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 1000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 1000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+        //     memberDetails12?.level_reward?.filter(item => item.amount === 1000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) +
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 2000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 2000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+        //     memberDetails12?.level_reward?.filter(item => item.amount === 2000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) +
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 4000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) -
+        //     memberDetails12?.house_reward?.filter(item => item.amount === 4000 && item.Time >= twentyFourHoursAgo && item.status === 'missed Reword').reduce((sum, item) => sum + item.house_reward, 0) +
+        //     memberDetails12?.level_reward?.filter(item => item.amount === 4000 && item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0)
+        // );
         // Current timestamp
 
         // Filter data within the last 24 hours
@@ -1347,8 +1314,8 @@ const getPlanController = async (req, res) => {
                 innerAmountSum4000: innerAmountSum4000,
             },
             data4: {
-                totalSlotSum: totalSlotSum + innerAmountSum20 + innerAmountSum40 + innerAmountSum100 + innerAmountSum200 + innerAmountSum500 + innerAmountSum1000 + innerAmountSum2000 + innerAmountSum4000,
-                totalSlotSum240: totalSlotSum24 + innerAmount24Sum20 + innerAmount24Sum40 + innerAmount24Sum100 + innerAmount24Sum200 + innerAmount24Sum500 + innerAmount24Sum1000 + innerAmount24Sum2000 + innerAmount24Sum4000,
+                totalSlotSum: totalSlotSum + levelIncomeSum + innerAmountSum20 + innerAmountSum40 + innerAmountSum100 + innerAmountSum200 + innerAmountSum500 + innerAmountSum1000 + innerAmountSum2000 + innerAmountSum4000,
+                totalSlotSum240: totalSlotSum24 + levelIncomeSum24 + innerAmount24Sum20 + innerAmount24Sum40 + innerAmount24Sum100 + innerAmount24Sum200 + innerAmount24Sum500 + innerAmount24Sum1000 + innerAmount24Sum2000 + innerAmount24Sum4000,
             }
         });
     } catch (error) {
