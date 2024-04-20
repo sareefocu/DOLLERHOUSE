@@ -1110,13 +1110,14 @@ const getPlanController = async (req, res) => {
             });
         });
         let totalSlotSum = (
-            memberDetails12?.house_reward?.reduce((sum, item) => sum + item.house_reward, 0) - memberDetails12?.house_reward.filter(item => item.status == undefined)?.reduce((sum, item) => sum + item.house_reward, 0)
+            memberDetails12?.house_reward?.reduce((sum, item) => sum + item.house_reward, 0) - memberDetails12?.house_reward.filter(item => item.status !== undefined)?.reduce((sum, item) => sum + item.house_reward, 0)
         );
+        console.log(totalSlotSum);
         let levelIncomeSum = (
             memberDetails12?.level_reward?.reduce((sum, item) => sum + item.reward, 0) || 0
         );
         let totalSlotSum24 = (
-            memberDetails12?.house_reward?.filter(item => item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) - memberDetails12?.house_reward.filter(item => item.Time >= twentyFourHoursAgo && item.status == undefined)?.reduce((sum, item) => sum + item.house_reward, 0)
+            memberDetails12?.house_reward?.filter(item => item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.house_reward, 0) - memberDetails12?.house_reward.filter(item => item.Time >= twentyFourHoursAgo && item.status !== undefined)?.reduce((sum, item) => sum + item.house_reward, 0)
         );
         let levelIncomeSum24 = (
             memberDetails12?.level_reward?.filter(item => item.Time >= twentyFourHoursAgo).reduce((sum, item) => sum + item.reward, 0) || 0
