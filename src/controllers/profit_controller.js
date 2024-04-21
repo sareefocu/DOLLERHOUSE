@@ -25,23 +25,6 @@ const getTotalProfitController = async (req, res) => {
             },
         },
         ])
-        let reward_details11233 = await rewardModel.aggregate([{
-            $match: {
-                user_id: req.query.userId
-            }
-        },
-        {
-            $graphLookup: {
-                from: "reward_details",
-                startWith: "$wallet_id",
-                connectFromField: "wallet_id",
-                depthField: "depthleval",
-                connectToField: "refferal",
-                restrictSearchWithMatch: { createdAt: { $gte: twentyFourHoursAgo } },
-                as: "referBY",
-            },
-        },
-        ])
         let reward_details1 = await rewardModel.find({ refferal: reward_details.wallet_id })
         const joinCount = await rewardModel.find({ refferal: reward_details.wallet_id, createdAt: { $gte: twentyFourHoursAgo } });
 
@@ -85,10 +68,14 @@ const getTotalProfitController = async (req, res) => {
             }
             return false;
         });
+        const reward_details11233 = reward_details112[0].referBY.filter((user) => {
+            const incomeTimestamp = new Date(user.incomeTimestamp);
+            return incomeTimestamp >= last24Hours && createdAtDate <= currentDate;
+        })
         let resp = {
             overAllProfit: houseProfit + levelProfit,
             directTeam: reward_details112[0].referBY.length,
-            directTeam112: reward_details11233[0].referBY.length,
+            directTeam112: reward_details11233.length,
             recentProfit: houseProfitlatest + levelProfitlatest,
             total_team: joinCount.length,
             recentTeam: reward_details1.length
