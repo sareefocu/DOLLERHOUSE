@@ -401,7 +401,7 @@ const setdata11 = async (req, res) => {
         console.error("Error in setdata11:", error);
         res.status(500).send({ message: "Internal server error" });
     }
-};
+}; 
 
 async function getRef(refSelectedId, refId, id) {
     const refSelected = await ref.findOne({ refId: refSelectedId });
@@ -735,13 +735,9 @@ const processReferral = async (id, refId) => {
 
 const lastModelController = async (req, res) => {
     let walletId = (req.body.wallet_id).toLowerCase();
-    let refferalId1 = req.body.refferal_id > 10 ? req.body.refferal_id?.toLowerCase() : req.body.refferal_id;
-    let refferalId = await userModel.findOne({ wallet_id: refferalId1 }).wallet_id;
-    if (alreadyUser === null) {
-        refferalId = await userModel.findOne({ user_id: refferalId1 }).wallet_id;
-    }
+    let refferalId = (req.body.refferal_id).toLowerCase();
     try {
-        let model = await teamModel.findOne({ user_id: walletId });
+        let model = await teamModel.findOne({ wallet_id: walletId });
         //console.log(model)
         if (model) {
             return res.send({ message: "this user is already existing" })
