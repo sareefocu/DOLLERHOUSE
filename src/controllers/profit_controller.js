@@ -72,7 +72,6 @@ const getTotalProfitController = async (req, res) => {
             const incomeTimestamp = new Date(user.createdAt);
             return incomeTimestamp >= last24Hours && incomeTimestamp <= currentDate;
         })
-        console.log(reward_details11233);
         let resp = {
             overAllProfit: houseProfit + levelProfit,
             directTeam: reward_details112[0].referBY.length,
