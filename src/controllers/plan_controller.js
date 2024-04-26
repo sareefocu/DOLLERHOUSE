@@ -28,14 +28,6 @@ const findUpline = async (refId, refModel, refModel2) => {
         return null;
     }
 };
-function calculatePercentageBasedOnLength(length, thresholds, percentages, fallbackPercentage) {
-    for (let i = 0; i < thresholds.length; i++) {
-        if (length <= thresholds[i]) {
-            return percentages[i] * length / 100;
-        }
-    }
-    return fallbackPercentage * length / 100;
-}
 async function getRef(refSelectedId, refId, id, refModel, refModel2, plandata, misseduser) {
     const refSelected = await refModel.findOne({ refId: refSelectedId });
     const refSelectedq = await refModel2.findOne({ refId: refSelectedId });
@@ -94,6 +86,7 @@ async function getRef2(refSelectedId, refId, id, newLeval, refModel, refModel2, 
             {
                 $match: {
                     refId: element.refId,
+                    leval: element.leval,
                 },
             },
             {
@@ -103,6 +96,7 @@ async function getRef2(refSelectedId, refId, id, newLeval, refModel, refModel2, 
                     connectFromField: "refId",
                     depthField: "depthleval",
                     connectToField: "supporterId",
+                    maxDepth: 4,
                     as: "referBY",
                 },
             },
@@ -244,6 +238,7 @@ const processReferral = async (id, refId, refModel, refModel2, plandata) => {
                         connectFromField: "refId",
                         depthField: "depthleval",
                         connectToField: "supporterId",
+                        maxDepth: 4,
                         as: "referBY",
                     },
                 },
@@ -291,7 +286,7 @@ const processReferral = async (id, refId, refModel, refModel2, plandata) => {
                 },
             ]
             )
-            console.log("memberDetails12[0].referBY.length==================>>", memberDetails12[0].referBY.length);
+            console.log("memberDetails12[0].referBY.length", memberDetails12[0].referBY.length);
             if (memberDetails12[0].referBY.length === 61) {
                 const refExistsrefExists1 = await refModel.findOne({ refId: element.supporterId, leval: element.leval });
                 const newLeval = element.leval + 1;
@@ -519,7 +514,7 @@ const getPlanController = async (req, res) => {
         let h520 = await ref.aggregate([
             {
                 $match: {
-                    refId: resp.wallet_id,
+                    uid: Number(resp.user_id),
                 },
             },
             {
@@ -528,7 +523,7 @@ const getPlanController = async (req, res) => {
                     startWith: "$refId",
                     connectFromField: "refId",
                     depthField: "depthleval",
-                    maxDepth: 5,
+                    maxDepth: 4,
                     connectToField: "supporterId",
                     as: "referBY",
                 },
@@ -580,13 +575,15 @@ const getPlanController = async (req, res) => {
         let innerAmountSum20 = 0;
         let innerAmount24Sum20 = 0;
         h520.forEach(item => {
-            item.referBY.forEach(refer => {
-                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                innerAmountSum20 += 5 * parse / 100;
-                const incomeTimestamp = new Date(refer.createdAt);
-                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+            item.missedusers.forEach(refer => {
+                if (refer.status === "done") {
                     let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                    innerAmount24Sum20 += 5 * parse / 100;
+                    innerAmountSum20 += 5 * parse / 100;
+                    const incomeTimestamp = new Date(refer.createdAt);
+                    if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                        let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                        innerAmount24Sum20 += 5 * parse / 100;
+                    }
                 }
             });
         });
@@ -602,7 +599,7 @@ const getPlanController = async (req, res) => {
                     startWith: "$refId",
                     connectFromField: "refId",
                     depthField: "depthleval",
-                    maxDepth: 5,
+                    maxDepth: 4,
                     connectToField: "supporterId",
                     as: "referBY",
                 },
@@ -654,13 +651,15 @@ const getPlanController = async (req, res) => {
         let innerAmountSum40 = 0;
         let innerAmount24Sum40 = 0;
         h540.forEach(item => {
-            item.referBY.forEach(refer => {
-                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                innerAmountSum40 += 10 * parse / 100;
-                const incomeTimestamp = new Date(refer.createdAt);
-                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+            item.missedusers.forEach(refer => {
+                if (refer.status === "done") {
                     let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                    innerAmount24Sum40 += 10 * parse / 100;
+                    innerAmountSum40 += 10 * parse / 100;
+                    const incomeTimestamp = new Date(refer.createdAt);
+                    if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                        let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                        innerAmount24Sum40 += 10 * parse / 100;
+                    }
                 }
             });
         });
@@ -728,13 +727,15 @@ const getPlanController = async (req, res) => {
         let innerAmountSum100 = 0;
         let innerAmount24Sum100 = 0;
         h5100.forEach(item => {
-            item.referBY.forEach(refer => {
-                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                innerAmountSum100 += 10 * parse / 100;
-                const incomeTimestamp = new Date(refer.createdAt);
-                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+            item.missedusers.forEach(refer => {
+                if (refer.status === "done") {
                     let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                    innerAmount24Sum100 += 10 * parse / 100;
+                    innerAmountSum100 += 10 * parse / 100;
+                    const incomeTimestamp = new Date(refer.createdAt);
+                    if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                        let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                        innerAmount24Sum100 += 10 * parse / 100;
+                    }
                 }
             });
         });
@@ -802,13 +803,15 @@ const getPlanController = async (req, res) => {
         let innerAmountSum200 = 0;
         let innerAmount24Sum200 = 0;
         h5200.forEach(item => {
-            item.referBY.forEach(refer => {
-                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                innerAmountSum200 += 10 * parse / 100;
-                const incomeTimestamp = new Date(refer.createdAt);
-                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+            item.missedusers.forEach(refer => {
+                if (refer.status === "done") {
                     let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                    innerAmount24Sum200 += 10 * parse / 100;
+                    innerAmountSum200 += 10 * parse / 100;
+                    const incomeTimestamp = new Date(refer.createdAt);
+                    if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                        let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                        innerAmount24Sum200 += 10 * parse / 100;
+                    }
                 }
             });
         });
@@ -876,13 +879,15 @@ const getPlanController = async (req, res) => {
         let innerAmountSum500 = 0;
         let innerAmount24Sum500 = 0;
         h5500.forEach(item => {
-            item.referBY.forEach(refer => {
-                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                innerAmountSum500 += 20 * parse / 100;
-                const incomeTimestamp = new Date(refer.createdAt);
-                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+            item.missedusers.forEach(refer => {
+                if (refer.status === "done") {
                     let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                    innerAmount24Sum500 += 20 * parse / 100;
+                    innerAmountSum500 += 20 * parse / 100;
+                    const incomeTimestamp = new Date(refer.createdAt);
+                    if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                        let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                        innerAmount24Sum500 += 20 * parse / 100;
+                    }
                 }
             });
         });
@@ -950,13 +955,15 @@ const getPlanController = async (req, res) => {
         let innerAmountSum1000 = 0;
         let innerAmount24Sum1000 = 0;
         h51000.forEach(item => {
-            item.referBY.forEach(refer => {
-                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                innerAmountSum1000 += 50 * parse / 100;
-                const incomeTimestamp = new Date(refer.createdAt);
-                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+            item.missedusers.forEach(refer => {
+                if (refer.status === "done") {
                     let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                    innerAmount24Sum1000 += 50 * parse / 100;
+                    innerAmountSum1000 += 50 * parse / 100;
+                    const incomeTimestamp = new Date(refer.createdAt);
+                    if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                        let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                        innerAmount24Sum1000 += 50 * parse / 100;
+                    }
                 }
             });
         });
@@ -1024,14 +1031,16 @@ const getPlanController = async (req, res) => {
         let innerAmountSum2000 = 0;
         let innerAmount24Sum2000 = 0;
         h52000.forEach(item => {
-            item.referBY.forEach(refer => {
-                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                innerAmountSum2000 += 100 * parse / 100;
-
-                const incomeTimestamp = new Date(refer.createdAt);
-                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+            item.missedusers.forEach(refer => {
+                if (refer.status === "done") {
                     let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                    innerAmount24Sum2000 += 100 * parse / 100;
+                    innerAmountSum2000 += 100 * parse / 100;
+
+                    const incomeTimestamp = new Date(refer.createdAt);
+                    if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                        let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                        innerAmount24Sum2000 += 100 * parse / 100;
+                    }
                 }
             });
         });
@@ -1099,13 +1108,15 @@ const getPlanController = async (req, res) => {
         let innerAmountSum4000 = 0;
         let innerAmount24Sum4000 = 0;
         h54000.forEach(item => {
-            item.referBY.forEach(refer => {
-                let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                innerAmountSum4000 += 200 * parse / 100;
-                const incomeTimestamp = new Date(refer.createdAt);
-                if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+            item.missedusers.forEach(refer => {
+                if (refer.status === "done") {
                     let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
-                    innerAmount24Sum4000 += 200 * parse / 100;
+                    innerAmountSum4000 += 200 * parse / 100;
+                    const incomeTimestamp = new Date(refer.createdAt);
+                    if (incomeTimestamp > twentyFourHoursAgo && incomeTimestamp <= now) {
+                        let parse = refer.depthleval + 1 === 1 ? 0 : refer.depthleval + 1 === 2 ? 10 : refer.depthleval + 1 === 3 ? 20 : refer.depthleval + 1 === 4 ? 20 : refer.depthleval + 1 === 5 ? 50 : 0
+                        innerAmount24Sum4000 += 200 * parse / 100;
+                    }
                 }
             });
         });
