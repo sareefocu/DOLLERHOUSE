@@ -638,96 +638,101 @@ const processReferral = async (id, refId) => {
                 },
             ]
             )
+            console.log("memberDetails12[0].referBY.length", memberDetails12[0].uid);
+            console.log("memberDetails12[0].referBY.length", memberDetails12[0].refId);
+            console.log("memberDetails12[0].referBY.length", memberDetails12[0].uid);
             console.log("memberDetails12[0].referBY.length", memberDetails12[0].referBY.length);
-            if (memberDetails12[0].referBY.length == 61) {
-                const refExistsrefExists1 = await ref.findOne({ refId: element.supporterId, leval: element.leval });
-                const newLeval = element.leval + 1;
-                console.log(refExistsrefExists1.refId.toString());
-                findUpline(refExistsrefExists1.refId.toString())
-                    .then(async (uplineData) => {
-                        if (uplineData !== null) {
-                            if (uplineData.referred.length < 2) {
+            if (memberDetails12[0].referBY.length < 62) {
+                if (memberDetails12[0].referBY.length == 61) {
+                    const refExistsrefExists1 = await ref.findOne({ refId: element.supporterId, leval: element.leval });
+                    const newLeval = element.leval + 1;
+                    console.log(refExistsrefExists1.refId.toString());
+                    findUpline(refExistsrefExists1.refId.toString())
+                        .then(async (uplineData) => {
+                            if (uplineData !== null) {
+                                if (uplineData.referred.length < 2) {
+                                    const refExistsrefExists1 = await ref.findOne({ refId: element.refId + `.` + newLeval });
+                                    if (refExistsrefExists1 == null) {
+                                        const newRef = await ref.create({
+                                            refId: element.refId + `.` + newLeval,
+                                            mainId: uplineData.refId,
+                                            supporterId: uplineData.refId || uplineData.refId,
+                                            uid: element.uid,
+                                            referred: [],
+                                            leval: newLeval
+                                        });
+                                        uplineData.referred.push(newRef.refId);
+                                        await uplineData.save();
+                                    }
+                                } else {
+                                    const newLeval = element.leval + 1;
+                                    await getRef2(uplineData.referred[uplineData.nextRefIndex], uplineData.refId, element.refId, newLeval);
+                                    uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
+                                    await uplineData.save();
+                                }
+                            } else {
                                 const refExistsrefExists1 = await ref.findOne({ refId: element.refId + `.` + newLeval });
                                 if (refExistsrefExists1 == null) {
                                     const newRef = await ref.create({
                                         refId: element.refId + `.` + newLeval,
-                                        mainId: uplineData.refId,
-                                        supporterId: uplineData.refId || uplineData.refId,
+                                        mainId: null,
+                                        supporterId: null,
                                         uid: element.uid,
                                         referred: [],
                                         leval: newLeval
                                     });
-                                    uplineData.referred.push(newRef.refId);
-                                    await uplineData.save();
+                                    refSelected.referred.push(newRef.refId);
+                                    refSelected.save();
                                 }
-                            } else {
-                                const newLeval = element.leval + 1;
-                                await getRef2(uplineData.referred[uplineData.nextRefIndex], uplineData.refId, element.refId, newLeval);
-                                uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
-                                await uplineData.save();
-                            }
-                        } else {
-                            const refExistsrefExists1 = await ref.findOne({ refId: element.refId + `.` + newLeval });
-                            if (refExistsrefExists1 == null) {
-                                const newRef = await ref.create({
-                                    refId: element.refId + `.` + newLeval,
-                                    mainId: null,
-                                    supporterId: null,
-                                    uid: element.uid,
-                                    referred: [],
-                                    leval: newLeval
-                                });
-                                refSelected.referred.push(newRef.refId);
-                                refSelected.save();
-                            }
-                        }
-                    })
-                    .catch(error => console.error(error));
-            }
-            if (memberDetails12[0].referBY.length <= 61) {
-                const refExists11 = await ref.findOne({ refId: element.refId, leval: element.leval });
-                const refExists1140 = await ref40.findOne({ uid: element.uid });
-                const refExists111 = await userModel.findOne({ wallet_id: id });
-                if (element.leval > 0 && refExists1140 === null) {
-                    await findUpline(refExists11.refId)
-                        .then(async (uplineData) => {
-                            console.log("Upline DataDataDataDataDataDataDataDataDataDataDataData:", uplineData);
-                            if (uplineData?.referred.length < 2) {
-                                const newRef = await ref.create({
-                                    refId: id,
-                                    mainId: uplineData.refId,
-                                    supporterId: uplineData.refId,
-                                    uid: refExists111.user_id,
-                                    referred: [],
-                                });
-
-                                uplineData.referred.push(newRef.refId);
-                                await uplineData.save();
-                                //   res.send(added);
-                            } else {
-                                await getRef(uplineData.referred[uplineData.nextRefIndex], refId, id);
-                                uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
-                                await uplineData.save();
                             }
                         })
-                } else {
-                    console.log("refExists", refExists);
-                    if (refExists?.referred.length < 2) {
-                        const newRef = await ref.create({
-                            refId: id,
-                            mainId: refExists.refId,
-                            supporterId: refExists.refId,
-                            uid: refExists111.user_id,
-                            referred: [],
-                        });
+                        .catch(error => console.error(error));
+                }
+                if (memberDetails12[0].referBY.length <= 61) {
+                    const refExists11 = await ref.findOne({ refId: element.refId, leval: element.leval });
+                    const refExists1140 = await ref40.findOne({ uid: element.uid });
+                    const refExists111 = await userModel.findOne({ wallet_id: id });
+                    if (element.leval > 0 && refExists1140 === null) {
+                        await findUpline(refExists11.refId)
+                            .then(async (uplineData) => {
+                                console.log("Upline DataDataDataDataDataDataDataDataDataDataDataData:", uplineData);
+                                if (uplineData?.referred.length < 2) {
+                                    const newRef = await ref.create({
+                                        refId: id,
+                                        mainId: uplineData.refId,
+                                        supporterId: uplineData.refId,
+                                        uid: refExists111.user_id,
+                                        referred: [],
+                                    });
 
-                        refExists.referred.push(newRef.refId);
-                        await refExists.save();
-                        //   res.send(added);
+                                    uplineData.referred.push(newRef.refId);
+                                    await uplineData.save();
+                                    //   res.send(added);
+                                } else {
+                                    await getRef(uplineData.referred[uplineData.nextRefIndex], refId, id);
+                                    uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
+                                    await uplineData.save();
+                                }
+                            })
                     } else {
-                        await getRef(refExists.referred[refExists.nextRefIndex], refId, id);
-                        refExists.nextRefIndex = refExists.nextRefIndex + 1 > 1 ? 0 : refExists.nextRefIndex + 1;
-                        await refExists.save();
+                        console.log("refExists", refExists);
+                        if (refExists?.referred.length < 2) {
+                            const newRef = await ref.create({
+                                refId: id,
+                                mainId: refExists.refId,
+                                supporterId: refExists.refId,
+                                uid: refExists111.user_id,
+                                referred: [],
+                            });
+
+                            refExists.referred.push(newRef.refId);
+                            await refExists.save();
+                            //   res.send(added);
+                        } else {
+                            await getRef(refExists.referred[refExists.nextRefIndex], refId, id);
+                            refExists.nextRefIndex = refExists.nextRefIndex + 1 > 1 ? 0 : refExists.nextRefIndex + 1;
+                            await refExists.save();
+                        }
                     }
                 }
             }
