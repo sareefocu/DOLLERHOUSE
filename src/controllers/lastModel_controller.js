@@ -638,6 +638,7 @@ const processReferral = async (id, refId) => {
                 },
             ]
             )
+            console.log("memberDetails12[0].referBY.length", memberDetails12[0].referBY.length);
             if (memberDetails12[0].referBY.length == 61) {
                 const refExistsrefExists1 = await ref.findOne({ refId: element.supporterId, leval: element.leval });
                 const newLeval = element.leval + 1;
