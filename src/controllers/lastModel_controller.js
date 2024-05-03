@@ -510,6 +510,7 @@ async function getRef(refSelectedId, refId, id) {
             refSelected.referred.push(newRef.refId);
             refSelected.save();
         } else {
+            let a = []
             for (const referredId of refSelected.referred) {
                 const refSelected = await ref.findOne({ refId: referredId });
                 const ref1 = await ref.aggregate([
@@ -655,7 +656,7 @@ async function getRef2(refSelectedId, refId, id, newLeval) {
                     element.save();
                 }
             } else {
-
+                let a = []
                 for (const referredId of refSelected.referred) {
                     const refSelected = await ref.findOne({ refId: referredId });
                     const ref1 = await ref.aggregate([
@@ -848,6 +849,7 @@ const processReferral = async (id, refId) => {
                                     await uplineData.save();
                                     //   res.send(added);
                                 } else {
+                                    let a = []
                                     for (const referredId of uplineData.referred) {
                                         const refSelected = await ref.findOne({ refId: referredId });
                                         const ref1 = await ref.aggregate([
@@ -884,7 +886,7 @@ const processReferral = async (id, refId) => {
                                     uplineData.nextRefIndex = index;
                                     await getRef(uplineData.referred[index], refId, id);
                                     // await getRef(uplineData.referred[uplineData.nextRefIndex], refId, id);
-                                      // uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
+                                    // uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
                                     // await uplineData.save();
                                 }
                             })
@@ -902,6 +904,7 @@ const processReferral = async (id, refId) => {
                             await refExists.save();
                             //   res.send(added);
                         } else {
+                            let a = []
                             for (const referredId of refExists.referred) {
                                 const refSelected = await ref.findOne({ refId: referredId });
                                 const ref1 = await ref.aggregate([
