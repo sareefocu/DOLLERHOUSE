@@ -848,9 +848,44 @@ const processReferral = async (id, refId) => {
                                     await uplineData.save();
                                     //   res.send(added);
                                 } else {
-                                    await getRef(uplineData.referred[uplineData.nextRefIndex], refId, id);
-                                    uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
-                                    await uplineData.save();
+                                    for (const referredId of uplineData.referred) {
+                                        const refSelected = await ref.findOne({ refId: referredId });
+                                        const ref1 = await ref.aggregate([
+                                            {
+                                                $match: {
+                                                    refId: referredId,
+                                                },
+                                            },
+                                            {
+                                                $graphLookup: {
+                                                    from: "users",
+                                                    startWith: "$refId",
+                                                    connectFromField: "refId",
+                                                    connectToField: "supporterId",
+                                                    as: "refers_to",
+                                                },
+                                            },
+                                        ]);
+
+                                        a.push({ referred: referredId, referredlegth: refSelected.referred?.length || 0, team: ref1[0].refers_to?.length || 0, refId: refId, createdAt: ref1[0].createdAt });
+                                    }
+                                    a.sort((a, b) => {
+                                        if (a.team === b.team) {
+                                            // If team counts are equal, sort by createdAt
+                                            return new Date(a.createdAt) - new Date(b.createdAt);
+                                        } else {
+                                            // Otherwise, sort by team counts
+                                            return a.team - b.team;
+                                        }
+                                    });
+                                    console.log("aaaaa", a);
+                                    const index = uplineData.referred.indexOf(a[0].referred);
+                                    console.log("aaaaa", index);
+                                    uplineData.nextRefIndex = index;
+                                    await getRef(uplineData.referred[index], refId, id);
+                                    // await getRef(uplineData.referred[uplineData.nextRefIndex], refId, id);
+                                      // uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
+                                    // await uplineData.save();
                                 }
                             })
                     } else {
@@ -867,9 +902,44 @@ const processReferral = async (id, refId) => {
                             await refExists.save();
                             //   res.send(added);
                         } else {
-                            await getRef(refExists.referred[refExists.nextRefIndex], refId, id);
-                            refExists.nextRefIndex = refExists.nextRefIndex + 1 > 1 ? 0 : refExists.nextRefIndex + 1;
-                            await refExists.save();
+                            for (const referredId of refExists.referred) {
+                                const refSelected = await ref.findOne({ refId: referredId });
+                                const ref1 = await ref.aggregate([
+                                    {
+                                        $match: {
+                                            refId: referredId,
+                                        },
+                                    },
+                                    {
+                                        $graphLookup: {
+                                            from: "users",
+                                            startWith: "$refId",
+                                            connectFromField: "refId",
+                                            connectToField: "supporterId",
+                                            as: "refers_to",
+                                        },
+                                    },
+                                ]);
+
+                                a.push({ referred: referredId, referredlegth: refSelected.referred?.length || 0, team: ref1[0].refers_to?.length || 0, refId: refId, createdAt: ref1[0].createdAt });
+                            }
+                            a.sort((a, b) => {
+                                if (a.team === b.team) {
+                                    // If team counts are equal, sort by createdAt
+                                    return new Date(a.createdAt) - new Date(b.createdAt);
+                                } else {
+                                    // Otherwise, sort by team counts
+                                    return a.team - b.team;
+                                }
+                            });
+                            console.log("aaaaa", a);
+                            const index = refExists.referred.indexOf(a[0].referred);
+                            console.log("aaaaa", index);
+                            refExists.nextRefIndex = index;
+                            await getRef(refExists.referred[index], refId, id);
+                            // await getRef(refExists.referred[refExists.nextRefIndex], refId, id);
+                            // refExists.nextRefIndex = refExists.nextRefIndex + 1 > 1 ? 0 : refExists.nextRefIndex + 1;
+                            // await refExists.save();
                         }
                     }
                 }
