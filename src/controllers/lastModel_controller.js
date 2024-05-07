@@ -1225,7 +1225,7 @@
                         connectToField: "supporterId",
                         maxDepth: 4,
                         as: "referBY",
-                        // restrictSearchWithMatch: { amount: amount }
+                        restrictSearchWithMatch: { amount: amount }
                     }
                 }
             ]
