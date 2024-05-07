@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-
 const RefSchema = new mongoose.Schema({
     refId: String,
     mainId: String,
@@ -9,6 +8,18 @@ const RefSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
+    amount: {
+        type: Number,
+    },
+    L: {
+        type: String,
+        default: 0,
+    },
+    R: {
+        type: String,
+        default: 0,
+    },
+    mid: String,
     setleval: {
         type: Number,
         default: 0,
@@ -38,6 +49,5 @@ const RefSchema = new mongoose.Schema({
 }, {
     timestamps: true,
 });
-
 const ref = mongoose.model('ref', RefSchema);
 export default ref;

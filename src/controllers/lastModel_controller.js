@@ -28,21 +28,21 @@ const logger = logHelper.getInstance({ appName: constants.app_name });
 //         }
 //     }
 // };
-const findUpline = async (refId) => {
-    // Find the ref data based on the refId in the ref collection
-    const refData = await ref.findOne({ refId: refId });
+// const findUpline = async (refId) => {
+//     // Find the ref data based on the refId in the ref collection
+//     const refData = await ref.findOne({ refId: refId });
 
-    if (refData.mainId !== null) {
-        // Check if the ref exists in the ref40 collection
-        const ref40Data = await ref40.findOne({ refId: refData.refId });
-        if (ref40Data?.mainId !== null) {
-            // If the ref data doesn't exist in the ref40 collection, recursively find the upline
-            return findUpline(refData.mainId); // Return the result of the recursive call
-        } else {
-            return refData;
-        }
-    }
-};
+//     if (refData.mainId !== null) {
+//         // Check if the ref exists in the ref40 collection
+//         const ref40Data = await ref40.findOne({ refId: refData.refId });
+//         if (ref40Data?.mainId !== null) {
+//             // If the ref data doesn't exist in the ref40 collection, recursively find the upline
+//             return findUpline(refData.mainId); // Return the result of the recursive call
+//         } else {
+//             return refData;
+//         }
+//     }
+// };
 
 // Call the function and log the result
 
@@ -50,11 +50,12 @@ const findUpline = async (refId) => {
 //     console.log("e", e);
 // })
 // console.log(data2);
-const setdata = async (plandata, a, b, ref1, ref2, res) => {
+const setdata = async (plandata, a, b, ref1, ref2, res, amount) => {
     let pipeline = [
         {
             $match: {
                 refId: b === "" ? a : a + b,
+                amount: amount
             },
         },
         {
@@ -212,11 +213,13 @@ const setdata = async (plandata, a, b, ref1, ref2, res) => {
             },
         },
     ];
+    console.log("b === ,", b === "" ? a : a + b,);
     let memberDetails = await ref1.aggregate(pipeline);
     let memberDetails12 = await ref1.aggregate([
         {
             $match: {
                 refId: b === "" ? a : a + b,
+                amount: amount
             },
         },
         {
@@ -319,7 +322,7 @@ const setdata = async (plandata, a, b, ref1, ref2, res) => {
     if (!memberDetails) {
         return res.send({ message: "team not found" })
     }
-    let userdata = await ref1.findOne({ refId: a })
+    let userdata = await ref1.findOne({ refId: b === "" ? a : a + b })
     const filteredData = memberDetails[0]?.referBY.filter(item => item.depthleval === 0);
     const filteredDatalastwor = memberDetails[0]?.referBY.filter(item => item.depthleval === 4);
     res.send({ data: filteredData, data1: memberDetails12, filteredDatalastwor: filteredDatalastwor, userdata: userdata })
@@ -494,90 +497,742 @@ const setdata11 = async (req, res) => {
         res.status(500).send({ message: "Internal server error" });
     }
 };
-async function getRef(refSelectedId, refId, id) {
-    const refSelected = await ref.findOne({ refId: refSelectedId });
-    const refSelectedq = await ref40.findOne({ refId: refSelectedId });
-    const refExists11 = await userModel.findOne({ wallet_id: id });
-    if (refSelectedq !== null) {
-        if (refSelected.referred.length < 2) {
-            const newRef = await ref.create({
-                refId: id,
-                mainId: refId,
-                supporterId: refSelected.refId,
-                uid: refExists11.user_id,
-                referred: [],
-            });
-            refSelected.referred.push(newRef.refId);
-            refSelected.save();
-        } else {
-            let a = []
-            for (const referredId of refSelected.referred) {
-                const refSelected = await ref.findOne({ refId: referredId });
-                const ref1 = await ref.aggregate([
-                    {
-                        $match: {
-                            refId: referredId,
-                        },
-                    },
-                    {
-                        $graphLookup: {
-                            from: "users",
-                            startWith: "$refId",
-                            connectFromField: "refId",
-                            connectToField: "supporterId",
-                            as: "refers_to",
-                        },
-                    },
-                ]);
+// async function getRef(refSelectedId, refId, id) {
+//     const refSelected = await ref.findOne({ refId: refSelectedId });
+//     const refSelectedq = await ref40.findOne({ refId: refSelectedId });
+//     const refExists11 = await userModel.findOne({ wallet_id: id });
+//     if (refSelectedq !== null) {
+//         if (refSelected.referred.length < 2) {
+//             const newRef = await ref.create({
+//                 refId: id,
+//                 mainId: refId,
+//                 supporterId: refSelected.refId,
+//                 uid: refExists11.user_id,
+//                 referred: [],
+//             });
+//             refSelected.referred.push(newRef.refId);
+//             refSelected.save();
+//         } else {
+//             let a = []
+//             for (const referredId of refSelected.referred) {
+//                 const refSelected = await ref.findOne({ refId: referredId });
+//                 const ref1 = await ref.aggregate([
+//                     {
+//                         $match: {
+//                             refId: referredId,
+//                         },
+//                     },
+//                     {
+//                         $graphLookup: {
+//                             from: "refs",
+//                             startWith: "$refId",
+//                             connectFromField: "refId",
+//                             connectToField: "supporterId",
+//                             as: "refers_to",
+//                         },
+//                     },
+//                 ]);
+//                 const ref2 = await ref.aggregate([
+//                     {
+//                         $match: {
+//                             refId: referredId,
+//                         },
+//                     },
+//                     {
+//                         $graphLookup: {
+//                             from: "refs",
+//                             startWith: "$refId",
+//                             connectFromField: "refId",
+//                             connectToField: "supporterId",
+//                             as: "refers_to",
+//                             maxDepth: ref1[0].refers_to?.length == 0 ? 0 : ref1[0].refers_to?.length == 1 ? 1 : ref1[0].refers_to?.length == 5 ? 2 : ref1[0].refers_to?.length == 13 ? 3 : 4,
+//                         },
+//                     },
+//                 ]);
+//                 console.log(ref1[0].refers_to?.length == 0 ? 0 : ref1[0].refers_to?.length == 1 ? 1 : ref1[0].refers_to?.length == 5 ? 2 : ref1[0].refers_to?.length == 13 ? 3 : 4);
+//                 console.log(ref1[0].refers_to?.length);
+//                 console.log(ref2[0].refers_to?.length);
+//                 a.push({ referred: referredId, referredlegth: refSelected.referred?.length, team: ref2[0].refers_to?.length || 0, refId: refId, createdAt: ref1[0].createdAt });
+//             }
+//             a.sort((a, b) => {
+//                 if (a.team === b.team) {
+//                     // If team counts are equal, sort by createdAt
+//                     return new Date(a.createdAt) - new Date(b.createdAt);
+//                 } else {
+//                     // Otherwise, sort by team counts
+//                     return a.team - b.team;
+//                 }
+//             });
+//             console.log("aaaaa", a);
+//             const index = refSelected.referred.indexOf(a[0].referred);
+//             refSelected.nextRefIndex = index;
+//             await getRef(refSelected.referred[index], refId, id);
+//             // await getRef(refSelected.referred[refSelected.nextRefIndex], refId, id);
+//             // refSelected.nextRefIndex = refSelected.nextRefIndex + 1 > 1 ? 0 : refSelected.nextRefIndex + 1;
+//             // await refSelected.save();
+//         }
+//     } else {
+//         if (refSelected.referred.length < 2) {
+//             const newRef = await ref.create({
+//                 refId: id,
+//                 mainId: refId,
+//                 supporterId: refSelected.refId,
+//                 uid: refExists11.user_id,
+//                 referred: [],
+//             });
+//             refSelected.referred.push(newRef.refId);
+//             refSelected.save();
+//         } else {
+//             await getRef(refSelected.referred[refSelected.nextRefIndex], refId, id);
+//             refSelected.nextRefIndex = refSelected.nextRefIndex + 1 > 1 ? 0 : refSelected.nextRefIndex + 1;
+//             await refSelected.save();
+//         }
+//     }
+// }
 
-                a.push({ referred: referredId, referredlegth: refSelected.referred?.length || 0, team: ref1[0].refers_to?.length || 0, refId: refId, createdAt: ref1[0].createdAt });
-            }
-            a.sort((a, b) => {
-                if (a.team === b.team) {
-                    // If team counts are equal, sort by createdAt
-                    return new Date(a.createdAt) - new Date(b.createdAt);
-                } else {
-                    // Otherwise, sort by team counts
-                    return a.team - b.team;
-                }
-            });
-            console.log("aaaaa", a);
-            const index = refSelected.referred.indexOf(a[0].referred);
-            refSelected.nextRefIndex = index;
-            await getRef(refSelected.referred[index], refId, id);
-            // await getRef(refSelected.referred[refSelected.nextRefIndex], refId, id);
-            // refSelected.nextRefIndex = refSelected.nextRefIndex + 1 > 1 ? 0 : refSelected.nextRefIndex + 1;
-            // await refSelected.save();
-        }
-    } else {
-        if (refSelected.referred.length < 2) {
-            const newRef = await ref.create({
-                refId: id,
-                mainId: refId,
-                supporterId: refSelected.refId,
-                uid: refExists11.user_id,
-                referred: [],
-            });
-            refSelected.referred.push(newRef.refId);
-            refSelected.save();
+// async function getRef2(refSelectedId, refId, id, newLeval) {
+//     const refExists123aaa = await ref.findOne({ refId: refId });
+//     const refExists123 = await ref.find({ uid: refExists123aaa.uid });
+//     for (let index = 0; index < refExists123.length; index++) {
+//         const element = refExists123[index];
+//         const ids = refId;
+//         let memberDetails12 = await ref.aggregate([
+//             {
+//                 $match: {
+//                     refId: element.refId,
+//                 },
+//             },
+//             {
+//                 $graphLookup: {
+//                     from: "refs",
+//                     startWith: "$refId",
+//                     connectFromField: "refId",
+//                     depthField: "depthleval",
+//                     connectToField: "supporterId",
+//                     maxDepth: 4,
+//                     as: "referBY",
+//                 },
+//             },
+//             {
+//                 $lookup: {
+//                     from: "plan_buyeds",
+//                     localField: "referBY.refId",
+//                     foreignField: "wallet_id",
+//                     as: "result",
+//                 },
+//             },
+//             {
+//                 $addFields: {
+//                     referBY: {
+//                         $map: {
+//                             input: "$referBY",
+//                             as: "refer",
+//                             in: {
+//                                 $mergeObjects: [
+//                                     "$$refer",
+//                                     {
+//                                         result: {
+//                                             $filter: {
+//                                                 input: "$result",
+//                                                 as: "res",
+//                                                 cond: {
+//                                                     $eq: [
+//                                                         "$$res.wallet_id",
+//                                                         "$$refer.refId",
+//                                                     ],
+//                                                 },
+//                                             },
+//                                         },
+//                                     },
+//                                 ],
+//                             },
+//                         },
+//                     },
+//                 },
+//             },
+//             {
+//                 $project: {
+//                     result: 0, // Optionally remove the 'result' field from the output
+//                 },
+//             },
+//         ]
+//         )
+//         if (memberDetails12[0].referBY.length <= 61) {
+//             const refExists11new = await ref.findOne({ refId: id });
+//             const newuserdata = await ref.find({ refId: id });
+//             const refExists = await ref.findOne({ refId: element.refId });
+//             const refSelected = await ref.findOne({ refId: element.refId });
+//             if (refExists.referred.length < 2) {
+//                 const refExistsrefExists1 = await ref.findOne({ refId: id + `.` + newLeval });
+//                 if (refExistsrefExists1 == null) {
+
+//                     const newRef = await ref.create({
+//                         refId: id + `.` + newLeval,
+//                         mainId: refId,
+//                         supporterId: element.refId,
+//                         uid: refExists11new?.uid,
+//                         referred: [],
+//                         leval: newuserdata.length
+//                     });
+//                     element.referred.push(newRef.refId);
+//                     element.save();
+//                 }
+//             } else {
+//                 let a = []
+//                 for (const referredId of refExists.referred) {
+//                     const refSelected = await ref.findOne({ refId: referredId });
+//                     const ref1 = await ref.aggregate([
+//                         {
+//                             $match: {
+//                                 refId: referredId,
+//                             },
+//                         },
+//                         {
+//                             $graphLookup: {
+//                                 from: "refs",
+//                                 startWith: "$refId",
+//                                 connectFromField: "refId",
+//                                 connectToField: "supporterId",
+//                                 as: "refers_to",
+//                             },
+//                         },
+//                     ]);
+//                     const ref2 = await ref.aggregate([
+//                         {
+//                             $match: {
+//                                 refId: referredId,
+//                             },
+//                         },
+//                         {
+//                             $graphLookup: {
+//                                 from: "refs",
+//                                 startWith: "$refId",
+//                                 connectFromField: "refId",
+//                                 connectToField: "supporterId",
+//                                 as: "refers_to",
+//                                 maxDepth: ref1[0].refers_to?.length == 0 ? 0 : ref1[0].refers_to?.length == 1 ? 1 : ref1[0].refers_to?.length == 5 ? 2 : ref1[0].refers_to?.length == 13 ? 3 : 4,
+//                             },
+//                         },
+//                     ]);
+//                     console.log(ref1[0].refers_to?.length == 0 ? 0 : ref1[0].refers_to?.length == 1 ? 1 : ref1[0].refers_to?.length == 5 ? 2 : ref1[0].refers_to?.length == 13 ? 3 : 4);
+//                     console.log(ref1[0].refers_to?.length);
+//                     console.log(ref2[0].refers_to?.length);
+//                     a.push({ referred: referredId, referredlegth: refSelected.referred?.length, team: ref2[0].refers_to?.length || 0, refId: refId, createdAt: ref1[0].createdAt });
+//                 }
+//                 a.sort((a, b) => {
+//                     if (a.team === b.team) {
+//                         // If team counts are equal, sort by createdAt
+//                         return new Date(a.createdAt) - new Date(b.createdAt);
+//                     } else {
+//                         // Otherwise, sort by team counts
+//                         return a.team - b.team;
+//                     }
+//                 });
+//                 console.log("aaaaa", a);
+//                 const index = refSelected.referred.indexOf(a[0].referred);
+//                 console.log("aaaaa", index);
+//                 refSelected.nextRefIndex = index;
+//                 await getRef(refSelected.referred[index], refId, id);
+//             }
+//         }
+//     }
+// }
+// const processReferral = async (id, refId) => {
+//     try {
+//         if (!id) return res.send('Invalid id');
+//         const idAlreadyExists = await ref.findOne({ refId: id });
+//         if (idAlreadyExists) return res.send('Invalid id, already exists');
+//         const isFirstRef = await ref.countDocuments();
+//         if (!isFirstRef) {
+//             const newRef = await ref.create({
+//                 refId: id,
+//                 mainId: null,
+//                 uid: "",
+//                 supporterId: null,
+//                 referred: [],
+//             });
+//         }
+
+//         if (!refId) return res.send('Invalid refId');
+//         const refExists123aaa = await ref.findOne({ refId: refId });
+//         const refExists123 = await ref.find({ uid: refExists123aaa?.uid });
+//         for (let index = 0; index < refExists123.length; index++) {
+//             const element = refExists123[index];
+//             const refExists = await ref.findOne({ refId: element.refId, leval: element.leval });
+//             let memberDetails12 = await ref.aggregate([
+//                 {
+//                     $match: {
+//                         refId: element.refId,
+//                         leval: element.leval
+//                     },
+//                 },
+//                 {
+//                     $graphLookup: {
+//                         from: "refs",
+//                         startWith: "$refId",
+//                         connectFromField: "refId",
+//                         depthField: "depthleval",
+//                         connectToField: "supporterId",
+//                         as: "referBY",
+//                         maxDepth: 4,
+//                     },
+//                 },
+//                 {
+//                     $lookup: {
+//                         from: "plan_buyeds",
+//                         localField: "referBY.refId",
+//                         foreignField: "wallet_id",
+//                         as: "result",
+//                     },
+//                 },
+//                 {
+//                     $addFields: {
+//                         referBY: {
+//                             $map: {
+//                                 input: "$referBY",
+//                                 as: "refer",
+//                                 in: {
+//                                     $mergeObjects: [
+//                                         "$$refer",
+//                                         {
+//                                             result: {
+//                                                 $filter: {
+//                                                     input: "$result",
+//                                                     as: "res",
+//                                                     cond: {
+//                                                         $eq: [
+//                                                             "$$res.wallet_id",
+//                                                             "$$refer.refId",
+//                                                         ],
+//                                                     },
+//                                                 },
+//                                             },
+//                                         },
+//                                     ],
+//                                 },
+//                             },
+//                         },
+//                     },
+//                 },
+//                 {
+//                     $project: {
+//                         result: 0, // Optionally remove the 'result' field from the output
+//                     },
+//                 },
+//             ]
+//             )
+//             if (memberDetails12[0].referBY.length < 62) {
+//                 if (memberDetails12[0].referBY.length == 61) {
+//                     const refExistsrefExists1 = await ref.findOne({ refId: element.supporterId, leval: element.leval });
+//                     const newLeval = element.leval + 1;
+//                     findUpline(refExistsrefExists1.refId.toString())
+//                         .then(async (uplineData) => {
+//                             if (uplineData !== null) {
+//                                 if (uplineData.referred.length < 2) {
+//                                     const refExistsrefExists1 = await ref.findOne({ refId: element.refId + `.` + newLeval });
+//                                     if (refExistsrefExists1 == null) {
+//                                         const newRef = await ref.create({
+//                                             refId: element.refId + `.` + newLeval,
+//                                             mainId: uplineData.refId,
+//                                             supporterId: uplineData.refId || uplineData.refId,
+//                                             uid: element.uid,
+//                                             referred: [],
+//                                             leval: newLeval
+//                                         });
+//                                         uplineData.referred.push(newRef.refId);
+//                                         await uplineData.save();
+//                                     }
+//                                 } else {
+//                                     const newLeval = element.leval + 1;
+//                                     await getRef2(uplineData.referred[uplineData.nextRefIndex], uplineData.refId, element.refId, newLeval);
+//                                     uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
+//                                     await uplineData.save();
+//                                 }
+//                             } else {
+//                                 const refExistsrefExists1 = await ref.findOne({ refId: element.refId + `.` + newLeval });
+//                                 if (refExistsrefExists1 == null) {
+//                                     const newRef = await ref.create({
+//                                         refId: element.refId + `.` + newLeval,
+//                                         mainId: null,
+//                                         supporterId: null,
+//                                         uid: element.uid,
+//                                         referred: [],
+//                                         leval: newLeval
+//                                     });
+//                                     refSelected.referred.push(newRef.refId);
+//                                     refSelected.save();
+//                                 }
+//                             }
+//                         })
+//                         .catch(error => console.error(error));
+//                 }
+//                 if (memberDetails12[0].referBY.length <= 61) {
+//                     const refExists11 = await ref.findOne({ refId: element.refId, leval: element.leval });
+//                     const refExists1140 = await ref40.findOne({ uid: element.uid });
+//                     const refExists111 = await userModel.findOne({ wallet_id: id });
+//                     if (element.leval > 0 && refExists1140 === null) {
+//                         await findUpline(refExists11.refId)
+//                             .then(async (uplineData) => {
+//                                 if (uplineData?.referred.length < 2) {
+//                                     const newRef = await ref.create({
+//                                         refId: id,
+//                                         mainId: uplineData.refId,
+//                                         supporterId: uplineData.refId,
+//                                         uid: refExists111.user_id,
+//                                         referred: [],
+//                                     });
+
+//                                     uplineData.referred.push(newRef.refId);
+//                                     await uplineData.save();
+//                                     //   res.send(added);
+//                                 } else {
+//                                     let a = []
+//                                     for (const referredId of refExists.referred) {
+//                                         const refSelected = await ref.findOne({ refId: referredId });
+//                                         const ref1 = await ref.aggregate([
+//                                             {
+//                                                 $match: {
+//                                                     refId: referredId,
+//                                                 },
+//                                             },
+//                                             {
+//                                                 $graphLookup: {
+//                                                     from: "refs",
+//                                                     startWith: "$refId",
+//                                                     connectFromField: "refId",
+//                                                     connectToField: "supporterId",
+//                                                     as: "refers_to",
+//                                                 },
+//                                             },
+//                                         ]);
+//                                         const ref2 = await ref.aggregate([
+//                                             {
+//                                                 $match: {
+//                                                     refId: referredId,
+//                                                 },
+//                                             },
+//                                             {
+//                                                 $graphLookup: {
+//                                                     from: "refs",
+//                                                     startWith: "$refId",
+//                                                     connectFromField: "refId",
+//                                                     connectToField: "supporterId",
+//                                                     as: "refers_to",
+//                                                     maxDepth: ref1[0].refers_to?.length == 0 ? 0 : ref1[0].refers_to?.length == 1 ? 1 : ref1[0].refers_to?.length == 5 ? 2 : ref1[0].refers_to?.length == 13 ? 3 : 4,
+//                                                 },
+//                                             },
+//                                         ]);
+//                                         console.log(ref1[0].refers_to?.length == 0 ? 0 : ref1[0].refers_to?.length == 1 ? 1 : ref1[0].refers_to?.length == 5 ? 2 : ref1[0].refers_to?.length == 13 ? 3 : 4);
+//                                         console.log(ref1[0].refers_to?.length);
+//                                         a.push({ referred: referredId, referredlegth: refSelected.referred?.length, team: ref2[0].refers_to?.length || 0, refId: refId, createdAt: ref1[0].createdAt });
+//                                     }
+//                                     a.sort((a, b) => {
+//                                         if (a.team === b.team) {
+//                                             // If team counts are equal, sort by createdAt
+//                                             return new Date(a.createdAt) - new Date(b.createdAt);
+//                                         } else {
+//                                             // Otherwise, sort by team counts
+//                                             return a.team - b.team;
+//                                         }
+//                                     });
+//                                     console.log("aaaaa", a);
+//                                     const index = uplineData.referred.indexOf(a[0].referred);
+//                                     console.log("aaaaa", index);
+//                                     uplineData.nextRefIndex = index;
+//                                     await getRef(uplineData.referred[index], refId, id);
+//                                     // await getRef(uplineData.referred[uplineData.nextRefIndex], refId, id);
+//                                     // uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
+//                                     // await uplineData.save();
+//                                 }
+//                             })
+//                     } else {
+//                         if (refExists?.referred.length < 2) {
+//                             const newRef = await ref.create({
+//                                 refId: id,
+//                                 mainId: refExists.refId,
+//                                 supporterId: refExists.refId,
+//                                 uid: refExists111.user_id,
+//                                 referred: [],
+//                             });
+
+//                             refExists.referred.push(newRef.refId);
+//                             await refExists.save();
+//                             //   res.send(added);
+//                         } else {
+//                             let a = []
+//                             for (const referredId of refExists.referred) {
+//                                 const refSelected = await ref.findOne({ refId: referredId });
+//                                 const ref1 = await ref.aggregate([
+//                                     {
+//                                         $match: {
+//                                             refId: referredId,
+//                                         },
+//                                     },
+//                                     {
+//                                         $graphLookup: {
+//                                             from: "refs",
+//                                             startWith: "$refId",
+//                                             connectFromField: "refId",
+//                                             connectToField: "supporterId",
+//                                             as: "refers_to",
+//                                         },
+//                                     },
+//                                 ]);
+//                                 const ref2 = await ref.aggregate([
+//                                     {
+//                                         $match: {
+//                                             refId: referredId,
+//                                         },
+//                                     },
+//                                     {
+//                                         $graphLookup: {
+//                                             from: "refs",
+//                                             startWith: "$refId",
+//                                             connectFromField: "refId",
+//                                             connectToField: "supporterId",
+//                                             as: "refers_to",
+//                                             maxDepth: ref1[0].refers_to?.length == 0 ? 0 : ref1[0].refers_to?.length == 1 ? 1 : ref1[0].refers_to?.length == 5 ? 2 : ref1[0].refers_to?.length == 13 ? 3 : 4,
+//                                         },
+//                                     },
+//                                 ]);
+//                                 console.log(ref1[0].refers_to?.length == 0 ? 0 : ref1[0].refers_to?.length == 1 ? 1 : ref1[0].refers_to?.length == 5 ? 2 : ref1[0].refers_to?.length == 13 ? 3 : 4);
+//                                 console.log(ref1[0].refers_to?.length);
+//                                 console.log(ref2[0].refers_to?.length);
+//                                 a.push({ referred: referredId, referredlegth: refSelected.referred?.length, team: ref2[0].refers_to?.length || 0, refId: refId, createdAt: ref1[0].createdAt });
+//                             }
+//                             a.sort((a, b) => {
+//                                 if (a.team === b.team) {
+//                                     // If team counts are equal, sort by createdAt
+//                                     return new Date(a.createdAt) - new Date(b.createdAt);
+//                                 } else {
+//                                     // Otherwise, sort by team counts
+//                                     return a.team - b.team;
+//                                 }
+//                             });
+//                             console.log("aaaaa", a);
+//                             const index = refExists.referred.indexOf(a[0].referred);
+//                             console.log("aaaaa", index);
+//                             refExists.nextRefIndex = index;
+//                             await getRef(refExists.referred[index], refId, id);
+//                             // await getRef(refExists.referred[refExists.nextRefIndex], refId, id);
+//                             // refExists.nextRefIndex = refExists.nextRefIndex + 1 > 1 ? 0 : refExists.nextRefIndex + 1;
+//                             // await refExists.save();
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//     } catch (error) {
+//         console.error(error);
+//         return 'An error occurred';
+//     }
+// };
+async function register(referid, newid, amount) {
+    try {
+        const referData = await ref.find({ "refId": referid, "amount": amount })
+        console.log(referData);
+        const refExists111 = await userModel.findOne({ wallet_id: newid });
+        const newRefDoc = new ref({
+            user: newid,
+            reffre: !referData ? referData[0]["mid"] : 0,
+            L: 0,
+            R: 0,
+            mid: newid,
+            amount: amount,
+            uid: refExists111.user_id,
+            leval: 0,
+            referred: [],
+            refId: newid,
+            missedusers: [],
+            misseduser: "",
+            mainId: referid,
+            supporterId: !referData ? referData[0]["refId"] : 0,
+        });
+        await newRefDoc.save();
+        let test = 0;
+        let LL = [referData[0]["L"], referData[0]["R"]];
+        console.log(LL);
+        if (referData[0]["L"] == 0) {
+            await leftPositionCheck(referData[0]["refId"], newid, amount);
+        } else if (referData[0]["R"] == 0) {
+            await rightPositionCheck(referData[0]["refId"], newid, amount);
         } else {
-            await getRef(refSelected.referred[refSelected.nextRefIndex], refId, id);
-            refSelected.nextRefIndex = refSelected.nextRefIndex + 1 > 1 ? 0 : refSelected.nextRefIndex + 1;
-            await refSelected.save();
+            while (true) {
+                for (let i of LL) {
+                    if (i !== 0) {
+                        const status = await leftPositionCheck(i, newid, amount);
+                        if (status === 1) {
+                            test = 1;
+                            console.log("for loop brake");
+                            break;
+                        }
+                    }
+                }
+                if (test === 1) {
+                    console.log("while loop brake");
+                    break;
+                }
+                for (let i of LL) {
+                    if (i !== 0) {
+                        const status = await rightPositionCheck(i, newid, amount);
+                        if (status === 1) {
+                            test = 1;
+                            break;
+                        }
+                    }
+                }
+                if (test === 1) {
+                    break;
+                }
+                let RR = [];
+                for (let k of LL) {
+                    if (k != 0) {
+                        const a = await ref.find({ "refId": k, "amount": amount })
+                        RR.push(a[0]["L"]);
+                    }
+                }
+                for (let k of LL) {
+                    if (k != 0) {
+                        const a = await ref.find({ "refId": k, "amount": amount })
+                        RR.push(a[0]["R"]);
+                    }
+                }
+                LL = RR;
+            }
+        }
+    } catch (e) {
+        console.error("Error:", e);
+    }
+}
+async function leftPositionCheck(L, user_mid, amount) {
+    const left = await ref.find({ "refId": L, "amount": amount })
+    if (left[0]["L"] == 0) {
+        console.log("update position in L");
+        await ref.updateOne({ "refId": L, "amount": amount }, { "$set": { "L": user_mid } });
+        await ref.updateOne({ "refId": L, "amount": amount }, { "$set": { "referred": [user_mid] } });
+        await ref.updateOne({ "refId": user_mid, "amount": amount }, { $set: { "supporterId": L } });
+        return 1;
+    } else {
+        return 0;
+    }
+}
+async function rightPositionCheck(L, user_mid, amount) {
+    const left = await ref.find({ "refId": L, "amount": amount })
+    if (left[0]["R"] == 0) {
+        console.log("update position in R");
+        await ref.updateOne({ "refId": L, "amount": amount }, { "$set": { "R": user_mid } });
+        await ref.updateOne({ "refId": L, "amount": amount }, { "$push": { "referred": user_mid } });
+        await ref.updateOne({ "refId": user_mid, "amount": amount }, { $set: { "supporterId": L } });
+        return 1;
+    } else {
+        return 0;
+    }
+}
+const dat = async (referid, amount) => {
+    const d1 = await ref.aggregate([
+        {
+            $match: {
+                uid: referid,
+                amount: amount,
+            },
+        },
+        {
+            $graphLookup: {
+                from: "refs",
+                startWith: "$refId",
+                connectFromField: "refId",
+                depthField: "depthleval",
+                connectToField: "supporterId",
+                maxDepth: 4,
+                as: "referBY",
+                restrictSearchWithMatch: { amount: amount }
+            }
+        }
+    ]
+    ) // Convert cursor to array
+    for (let index = 0; index < d1.length; index++) {
+        const element = d1[index];
+        if (element.referBY.length < 62) {
+            const newLeval = element.leval + 1;
+            const refExistsrefExists1 = await ref.findOne({ refId: element.refId, leval: element.leval });
+            if (element.referBY.length == 61) {
+                findUpline(refExistsrefExists1.refId, element.amount * 2).then(async (uplineData) => {
+                    const refExistsrefExists2 = await ref.find({ uid: referid, amount: amount })
+                    const d2 = await ref.aggregate([
+                        {
+                            $match: {
+                                refId: refExistsrefExists2.length - 1 == 0 ? refExistsrefExists1.uid : refExistsrefExists1.uid + `.` + refExistsrefExists2.length,
+                                amount: amount,
+                            },
+                        },
+                        {
+                            $graphLookup: {
+                                from: "refs",
+                                startWith: "$refId",
+                                connectFromField: "refId",
+                                depthField: "depthleval",
+                                connectToField: "supporterId",
+                                maxDepth: 4,
+                                as: "referBY",
+                                restrictSearchWithMatch: { amount: 20 }
+                            }
+                        }
+                    ]
+                    )
+                    for (let index = 0; index < d2.length; index++) {
+                        const element1 = d2[index];
+                        if (element1.referBY.length < 62) {
+                            if (element1.supporterId === 0) {
+                                const checkalredyexist = await ref.findOne({ refId: element1.refId + `.` + refExistsrefExists2.length, leval: element.leval });
+                                if (checkalredyexist === null) {
+                                    const newRefDoc = new ref({
+                                        "user": element1.user,
+                                        "reffre": 0,
+                                        "L": 0,
+                                        "R": 0,
+                                        "mid": element1.mid,
+                                        "amount": 20,
+                                        "uid": element1.uid,
+                                        "leval": newLeval,
+                                        "referred": [],
+                                        "refId": element1.refId + `.` + refExistsrefExists2.length,
+                                        "missedusers": [],
+                                        "mainId": 0,
+                                        "supporterId": 0,
+                                    });
+                                    await newRefDoc.save();
+                                }
+                            } else {
+                                const checkalredyexist = await ref.findOne({ refId: element1.refId + `.` + refExistsrefExists2.length, leval: element.leval });
+                                if (checkalredyexist === null) {
+                                    await register(element1.supporterId, element1.refId + `.` + refExistsrefExists2.length, amount);
+                                }
+                            }
+                        }
+                    }
+                })
+            } else {
+                const refExistsrefExists1 = await ref.findOne({ refId: element.supporterId, leval: element.leval });
+                console.log(refExistsrefExists1);
+                if (element.supporterId != 0) {
+                    await dat(refExistsrefExists1.uid, amount)
+                }
+            }
         }
     }
 }
-
-async function getRef2(refSelectedId, refId, id, newLeval) {
-    const refExists123aaa = await ref.findOne({ refId: refId });
-    const refExists123 = await ref.find({ uid: refExists123aaa.uid });
-    for (let index = 0; index < refExists123.length; index++) {
-        const element = refExists123[index];
-        const ids = refId;
-        let memberDetails12 = await ref.aggregate([
+const lastModelController = async (req, res) => {
+    let walletId = (req.body.wallet_id).toLowerCase();
+    let refferalId = (req.body.refferal_id).toLowerCase();
+    let amount = 20
+    try {
+        const referid = refferalId;
+        const newid = walletId;
+        const d1 = await ref.aggregate([
             {
                 $match: {
-                    refId: element.refId,
+                    refId: referid,
+                    amount: amount,
                 },
             },
             {
@@ -589,550 +1244,22 @@ async function getRef2(refSelectedId, refId, id, newLeval) {
                     connectToField: "supporterId",
                     maxDepth: 4,
                     as: "referBY",
-                },
-            },
-            {
-                $lookup: {
-                    from: "plan_buyeds",
-                    localField: "referBY.refId",
-                    foreignField: "wallet_id",
-                    as: "result",
-                },
-            },
-            {
-                $addFields: {
-                    referBY: {
-                        $map: {
-                            input: "$referBY",
-                            as: "refer",
-                            in: {
-                                $mergeObjects: [
-                                    "$$refer",
-                                    {
-                                        result: {
-                                            $filter: {
-                                                input: "$result",
-                                                as: "res",
-                                                cond: {
-                                                    $eq: [
-                                                        "$$res.wallet_id",
-                                                        "$$refer.refId",
-                                                    ],
-                                                },
-                                            },
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                    },
-                },
-            },
-            {
-                $project: {
-                    result: 0, // Optionally remove the 'result' field from the output
-                },
-            },
+                    restrictSearchWithMatch: { amount: amount }
+                }
+            }
         ]
         )
-        if (memberDetails12[0].referBY.length <= 61) {
-            const refExists11new = await ref.findOne({ refId: id });
-            const newuserdata = await ref.find({ refId: id });
-            const refExists = await ref.findOne({ refId: element.refId });
-            const refSelected = await ref.findOne({ refId: element.refId });
-            if (refExists.referred.length < 2) {
-                const refExistsrefExists1 = await ref.findOne({ refId: id + `.` + newLeval });
-                if (refExistsrefExists1 == null) {
-
-                    const newRef = await ref.create({
-                        refId: id + `.` + newLeval,
-                        mainId: refId,
-                        supporterId: element.refId,
-                        uid: refExists11new?.uid,
-                        referred: [],
-                        leval: newuserdata.length
-                    });
-                    element.referred.push(newRef.refId);
-                    element.save();
+        await dat(referid, amount)
+        for (let index = 0; index < d1.length; index++) {
+            const element = d1[index];
+            if (element.referBY.length < 61) {
+                const refExistsrefExists1 = await ref.findOne({ refId: newid });
+                if (refExistsrefExists1 === null) {
+                    console.log(element.refId, newid, amount, newid);
+                    await register(element.refId, newid, amount).then(() => {
+                        return res.send({ message: `We have successfully added this member under the team of : ${newid}` })
+                    })
                 }
-            } else {
-                let a = []
-                for (const referredId of refSelected.referred) {
-                    const refSelected = await ref.findOne({ refId: referredId });
-                    const ref1 = await ref.aggregate([
-                        {
-                            $match: {
-                                refId: referredId,
-                            },
-                        },
-                        {
-                            $graphLookup: {
-                                from: "users",
-                                startWith: "$refId",
-                                connectFromField: "refId",
-                                connectToField: "supporterId",
-                                as: "refers_to",
-                            },
-                        },
-                    ]);
-
-                    a.push({ referred: referredId, referredlegth: refSelected.referred?.length || 0, team: ref1[0].refers_to?.length || 0, refId: refId, createdAt: ref1[0].createdAt });
-                }
-                a.sort((a, b) => {
-                    if (a.team === b.team) {
-                        // If team counts are equal, sort by createdAt
-                        return new Date(a.createdAt) - new Date(b.createdAt);
-                    } else {
-                        // Otherwise, sort by team counts
-                        return a.team - b.team;
-                    }
-                });
-                console.log("aaaaa", a);
-                const index = refSelected.referred.indexOf(a[0].referred);
-                console.log("aaaaa", index);
-                refSelected.nextRefIndex = index;
-                await getRef(refSelected.referred[index], refId, id);
-            }
-        }
-    }
-}
-const processReferral = async (id, refId) => {
-    try {
-        if (!id) return res.send('Invalid id');
-        const idAlreadyExists = await ref.findOne({ refId: id });
-        if (idAlreadyExists) return res.send('Invalid id, already exists');
-        const isFirstRef = await ref.countDocuments();
-        if (!isFirstRef) {
-            const newRef = await ref.create({
-                refId: id,
-                mainId: null,
-                uid: "",
-                supporterId: null,
-                referred: [],
-            });
-        }
-
-        if (!refId) return res.send('Invalid refId');
-        const refExists123aaa = await ref.findOne({ refId: refId });
-        const refExists123 = await ref.find({ uid: refExists123aaa?.uid });
-        for (let index = 0; index < refExists123.length; index++) {
-            const element = refExists123[index];
-            const refExists = await ref.findOne({ refId: element.refId, leval: element.leval });
-            let memberDetails12 = await ref.aggregate([
-                {
-                    $match: {
-                        refId: element.refId,
-                        leval: element.leval
-                    },
-                },
-                {
-                    $graphLookup: {
-                        from: "refs",
-                        startWith: "$refId",
-                        connectFromField: "refId",
-                        depthField: "depthleval",
-                        connectToField: "supporterId",
-                        as: "referBY",
-                        maxDepth: 4,
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "plan_buyeds",
-                        localField: "referBY.refId",
-                        foreignField: "wallet_id",
-                        as: "result",
-                    },
-                },
-                {
-                    $addFields: {
-                        referBY: {
-                            $map: {
-                                input: "$referBY",
-                                as: "refer",
-                                in: {
-                                    $mergeObjects: [
-                                        "$$refer",
-                                        {
-                                            result: {
-                                                $filter: {
-                                                    input: "$result",
-                                                    as: "res",
-                                                    cond: {
-                                                        $eq: [
-                                                            "$$res.wallet_id",
-                                                            "$$refer.refId",
-                                                        ],
-                                                    },
-                                                },
-                                            },
-                                        },
-                                    ],
-                                },
-                            },
-                        },
-                    },
-                },
-                {
-                    $project: {
-                        result: 0, // Optionally remove the 'result' field from the output
-                    },
-                },
-            ]
-            )
-            console.log("memberDetails12[0].referBY.length", memberDetails12[0].uid);
-            console.log("memberDetails12[0].referBY.length", memberDetails12[0].refId);
-            console.log("memberDetails12[0].referBY.length", memberDetails12[0].uid);
-            console.log("memberDetails12[0].referBY.length", memberDetails12[0].referBY.length);
-            if (memberDetails12[0].referBY.length < 62) {
-                if (memberDetails12[0].referBY.length == 61) {
-                    const refExistsrefExists1 = await ref.findOne({ refId: element.supporterId, leval: element.leval });
-                    const newLeval = element.leval + 1;
-                    findUpline(refExistsrefExists1.refId.toString())
-                        .then(async (uplineData) => {
-                            if (uplineData !== null) {
-                                if (uplineData.referred.length < 2) {
-                                    const refExistsrefExists1 = await ref.findOne({ refId: element.refId + `.` + newLeval });
-                                    if (refExistsrefExists1 == null) {
-                                        const newRef = await ref.create({
-                                            refId: element.refId + `.` + newLeval,
-                                            mainId: uplineData.refId,
-                                            supporterId: uplineData.refId || uplineData.refId,
-                                            uid: element.uid,
-                                            referred: [],
-                                            leval: newLeval
-                                        });
-                                        uplineData.referred.push(newRef.refId);
-                                        await uplineData.save();
-                                    }
-                                } else {
-                                    const newLeval = element.leval + 1;
-                                    await getRef2(uplineData.referred[uplineData.nextRefIndex], uplineData.refId, element.refId, newLeval);
-                                    uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
-                                    await uplineData.save();
-                                }
-                            } else {
-                                const refExistsrefExists1 = await ref.findOne({ refId: element.refId + `.` + newLeval });
-                                if (refExistsrefExists1 == null) {
-                                    const newRef = await ref.create({
-                                        refId: element.refId + `.` + newLeval,
-                                        mainId: null,
-                                        supporterId: null,
-                                        uid: element.uid,
-                                        referred: [],
-                                        leval: newLeval
-                                    });
-                                    refSelected.referred.push(newRef.refId);
-                                    refSelected.save();
-                                }
-                            }
-                        })
-                        .catch(error => console.error(error));
-                }
-                if (memberDetails12[0].referBY.length <= 61) {
-                    const refExists11 = await ref.findOne({ refId: element.refId, leval: element.leval });
-                    const refExists1140 = await ref40.findOne({ uid: element.uid });
-                    const refExists111 = await userModel.findOne({ wallet_id: id });
-                    if (element.leval > 0 && refExists1140 === null) {
-                        await findUpline(refExists11.refId)
-                            .then(async (uplineData) => {
-                                if (uplineData?.referred.length < 2) {
-                                    const newRef = await ref.create({
-                                        refId: id,
-                                        mainId: uplineData.refId,
-                                        supporterId: uplineData.refId,
-                                        uid: refExists111.user_id,
-                                        referred: [],
-                                    });
-
-                                    uplineData.referred.push(newRef.refId);
-                                    await uplineData.save();
-                                    //   res.send(added);
-                                } else {
-                                    let a = []
-                                    for (const referredId of uplineData.referred) {
-                                        const refSelected = await ref.findOne({ refId: referredId });
-                                        const ref1 = await ref.aggregate([
-                                            {
-                                                $match: {
-                                                    refId: referredId,
-                                                },
-                                            },
-                                            {
-                                                $graphLookup: {
-                                                    from: "users",
-                                                    startWith: "$refId",
-                                                    connectFromField: "refId",
-                                                    connectToField: "supporterId",
-                                                    as: "refers_to",
-                                                },
-                                            },
-                                        ]);
-
-                                        a.push({ referred: referredId, referredlegth: refSelected.referred?.length || 0, team: ref1[0].refers_to?.length || 0, refId: refId, createdAt: ref1[0].createdAt });
-                                    }
-                                    a.sort((a, b) => {
-                                        if (a.team === b.team) {
-                                            // If team counts are equal, sort by createdAt
-                                            return new Date(a.createdAt) - new Date(b.createdAt);
-                                        } else {
-                                            // Otherwise, sort by team counts
-                                            return a.team - b.team;
-                                        }
-                                    });
-                                    console.log("aaaaa", a);
-                                    const index = uplineData.referred.indexOf(a[0].referred);
-                                    console.log("aaaaa", index);
-                                    uplineData.nextRefIndex = index;
-                                    await getRef(uplineData.referred[index], refId, id);
-                                    // await getRef(uplineData.referred[uplineData.nextRefIndex], refId, id);
-                                    // uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
-                                    // await uplineData.save();
-                                }
-                            })
-                    } else {
-                        if (refExists?.referred.length < 2) {
-                            const newRef = await ref.create({
-                                refId: id,
-                                mainId: refExists.refId,
-                                supporterId: refExists.refId,
-                                uid: refExists111.user_id,
-                                referred: [],
-                            });
-
-                            refExists.referred.push(newRef.refId);
-                            await refExists.save();
-                            //   res.send(added);
-                        } else {
-                            let a = []
-                            for (const referredId of refExists.referred) {
-                                const refSelected = await ref.findOne({ refId: referredId });
-                                const ref1 = await ref.aggregate([
-                                    {
-                                        $match: {
-                                            refId: referredId,
-                                        },
-                                    },
-                                    {
-                                        $graphLookup: {
-                                            from: "users",
-                                            startWith: "$refId",
-                                            connectFromField: "refId",
-                                            connectToField: "supporterId",
-                                            as: "refers_to",
-                                        },
-                                    },
-                                ]);
-
-                                a.push({ referred: referredId, referredlegth: refSelected.referred?.length || 0, team: ref1[0].refers_to?.length || 0, refId: refId, createdAt: ref1[0].createdAt });
-                            }
-                            a.sort((a, b) => {
-                                if (a.team === b.team) {
-                                    // If team counts are equal, sort by createdAt
-                                    return new Date(a.createdAt) - new Date(b.createdAt);
-                                } else {
-                                    // Otherwise, sort by team counts
-                                    return a.team - b.team;
-                                }
-                            });
-                            console.log("aaaaa", a);
-                            const index = refExists.referred.indexOf(a[0].referred);
-                            console.log("aaaaa", index);
-                            refExists.nextRefIndex = index;
-                            await getRef(refExists.referred[index], refId, id);
-                            // await getRef(refExists.referred[refExists.nextRefIndex], refId, id);
-                            // refExists.nextRefIndex = refExists.nextRefIndex + 1 > 1 ? 0 : refExists.nextRefIndex + 1;
-                            // await refExists.save();
-                        }
-                    }
-                }
-            }
-        }
-    } catch (error) {
-        console.error(error);
-        return 'An error occurred';
-    }
-};
-
-const lastModelController = async (req, res) => {
-    let walletId = (req.body.wallet_id).toLowerCase();
-    let refferalId = (req.body.refferal_id).toLowerCase();
-    try {
-        let model = await teamModel.findOne({ wallet_id: walletId });
-        if (model) {
-            return res.send({ message: "this user is already existing" })
-        }
-        let parent = await teamModel.findOne({ wallet_id: refferalId });
-
-        /// my code
-        const refId = refferalId;
-        const id = walletId;
-        await processReferral(id, refId).then(() => {
-            console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-        }).catch((error) => {
-            console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-        })
-        if (!parent) {
-            let user = await userModel.findOne({ wallet_id: walletId })
-
-            if (!user) {
-                return res.send({ message: "user not found" })
-            }
-            let modelDetail = new teamModel({ wallet_id: walletId, refferal_id: refferalId, user_id: user.user_id })
-            await modelDetail.save();
-            return res.send({ message: "this user is saved" })
-        }
-
-        if (parent.refferal_count < 2) {
-            let user = await userModel.findOne({ wallet_id: walletId })
-            let modelDetail = new teamModel({ wallet_id: walletId, refferal_id: refferalId, user_id: user.user_id })
-            await modelDetail.save();
-
-            let parent1 = await teamModel.findOne({ wallet_id: parent.refferal_id });
-            await parent.updateOne({ $inc: { refferal_count: 1 } });
-            let parent2
-            let parent3
-            let parent4
-            if (parent1) {
-                await parent1.updateOne({ refferal_details: [...parent1.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.1 * 0.50, level: 1, rewardvalue: "20%" }] });
-                parent2 = await teamModel.findOne({ wallet_id: parent1.refferal_id });
-            }
-            if (parent2) {
-                await parent2.updateOne({ refferal_details: [...parent2.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.2 * 0.5, level: 2, rewardvalue: "20%" }] })
-                parent3 = await teamModel.findOne({ wallet_id: parent2.refferal_id });
-            }
-
-            if (parent3) {
-                await parent3.updateOne({ refferal_details: [...parent3.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.2 * 0.5, level: 3, rewardvalue: "50%" }] })
-                parent4 = await teamModel.findOne({ wallet_id: parent3.refferal_id });
-            }
-            if (parent4) {
-                await parent4.updateOne({ refferal_details: [...parent4.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.5 * 0.5, level: 4, rewardvalue: "50%" }] })
-            }
-
-            return res.send({ message: `We have successfully added this member under the team of : ${refferalId}`, user: user.user_id })
-        } else {
-            let totalNulle = await teamModel.find({ $or: [{ refferal_count: 0 }, { refferal_count: 1 }] })
-            for (let i = 0; i < totalNulle.length; i++) {
-                let memberdetails3
-                let memberdetails4
-                let memberdetails5
-                let memberdetails1 = await teamModel.findOne({ wallet_id: totalNulle[i].refferal_id })
-                if (!memberdetails1 && totalNulle[i].refferal_id !== 'superUser') {
-                    return res.send({ message: "team is completed" })
-                } else if (memberdetails1 && totalNulle[i].refferal_id === 'superUser') {
-                    continue;
-                }
-                if (memberdetails1.wallet_id === refferalId) {
-                    let user = await userModel.findOne({ wallet_id: walletId })
-                    let modelDetail = new teamModel({ wallet_id: walletId, refferal_id: totalNulle[i].wallet_id, user_id: user.user_id })
-                    await modelDetail.save();
-
-                    await memberdetails1.updateOne({ refferal_details: [...memberdetails1.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.1 * 0.5, level: 1, rewardvalue: "10%" }] })
-                    let parent1 = await teamModel.findOne({ wallet_id: memberdetails1.refferal_id });
-                    let parent2
-                    if (parent1) {
-                        await parent1.updateOne({ refferal_details: [...parent1.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.2 * 0.5, level: 2, rewardvalue: "20%" }] })
-                        parent2 = await teamModel.findOne({ wallet_id: parent1.refferal_id });
-                    }
-                    let parent3
-                    if (parent2) {
-                        await parent2.updateOne({ refferal_details: [...parent2.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.2 * 0.5, level: 3, rewardvalue: "20%" }] })
-                        parent3 = await teamModel.findOne({ wallet_id: parent2.refferal_id });
-                    }
-
-                    if (parent3) {
-                        await parent3.updateOne({ refferal_details: [...parent3.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.5 * 0.5, level: 4, rewardvalue: "50%" }] })
-                    }
-                    await totalNulle[i].updateOne({ $inc: { refferal_count: 1 } })
-                    return res.send({ message: `We have successfully added this member under the team of : ${totalNulle[i].refferal_id}`, user: user.user_id })
-                }
-                let memberdetails2 = await teamModel.findOne({ wallet_id: memberdetails1.refferal_id })
-                if (memberdetails2) {
-                    if (memberdetails2.wallet_id === refferalId) {
-                        let user = await userModel.findOne({ wallet_id: walletId })
-                        let modelDetail = new teamModel({ wallet_id: walletId, refferal_id: totalNulle[i].wallet_id, user_id: user.user_id })
-                        await modelDetail.save();
-                        await memberdetails1.updateOne({ refferal_details: [...memberdetails1.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.1 * 0.5, level: 1, rewardvalue: "10%" }] })
-                        await memberdetails2.updateOne({ refferal_details: [...memberdetails2.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.2 * 0.5, level: 2, rewardvalue: "20%" }] })
-                        let parent2 = await teamModel.findOne({ wallet_id: memberdetails2.refferal_id });
-
-                        let parent3
-                        if (parent2) {
-                            await parent2.updateOne({ refferal_details: [...parent2.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.2 * 0.5, level: 3, rewardvalue: "20%" }] })
-                            parent3 = await teamModel.findOne({ wallet_id: parent2.refferal_id });
-                        }
-
-                        if (parent3) {
-                            await parent3.updateOne({ refferal_details: [...parent3.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.5 * 0.5, level: 4, rewardvalue: "50%" }] })
-                        }
-                        await totalNulle[i].updateOne({ $inc: { refferal_count: 1 } })
-                        return res.send({ message: `We have successfully added this member under the team of : ${totalNulle[i].refferal_id}`, user: user.user_id })
-                    }
-                    memberdetails3 = await teamModel.findOne({ wallet_id: memberdetails2.refferal_id })
-                }
-
-                if (memberdetails3) {
-                    if (memberdetails3.wallet_id === refferalId) {
-                        let user = await userModel.findOne({ wallet_id: walletId })
-                        let modelDetail = new teamModel({ wallet_id: walletId, refferal_id: totalNulle[i].wallet_id, user_id: user.user_id })
-                        await modelDetail.save();
-                        await memberdetails1.updateOne({ refferal_details: [...memberdetails1.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.1 * 0.5, level: 1, rewardvalue: "10%" }] })
-                        await memberdetails2.updateOne({ refferal_details: [...memberdetails2.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.2 * 0.5, level: 2, rewardvalue: "20%" }] })
-                        await memberdetails3.updateOne({ refferal_details: [...memberdetails3.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.2 * 0.5, level: 3, rewardvalue: "20%" }] })
-                        let parent3 = await teamModel.findOne({ wallet_id: memberdetails3.refferal_id });
-
-                        if (parent3) {
-                            await parent3.updateOne({ refferal_details: [...parent3.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.5 * 0.5, level: 4, rewardvalue: "50%" }] })
-                        }
-                        await totalNulle[i].updateOne({ $inc: { refferal_count: 1 } })
-                        return res.send({ message: `We have successfully added this member under the team of : ${totalNulle[i].refferal_id}`, user: user.user_id })
-                    }
-                    memberdetails4 = await teamModel.findOne({ wallet_id: memberdetails3.refferal_id })
-                }
-
-                if (memberdetails4) {
-                    if (memberdetails4.wallet_id === refferalId) {
-                        let user = await userModel.findOne({ wallet_id: walletId })
-                        let modelDetail = new teamModel({ wallet_id: walletId, refferal_id: totalNulle[i].wallet_id, user_id: user.user_id })
-                        await modelDetail.save();
-                        await memberdetails1.updateOne({ refferal_details: [...memberdetails1.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.1 * 0.5, level: 1, rewardvalue: "10%" }] })
-                        await memberdetails2.updateOne({ refferal_details: [...memberdetails2.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.2 * 0.5, level: 2, rewardvalue: "20%" }] })
-                        await memberdetails3.updateOne({ refferal_details: [...memberdetails3.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.2 * 0.5, level: 3, rewardvalue: "20%" }] })
-                        await memberdetails4.updateOne({ refferal_details: [...memberdetails4.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.5 * 0.5, level: 4, rewardvalue: "50%" }] })
-
-                        await totalNulle[i].updateOne({ $inc: { refferal_count: 1 } })
-                        return res.send({ message: `We have successfully added this member under the team of : ${totalNulle[i].refferal_id}`, user: user.user_id })
-                    }
-                    memberdetails5 = await teamModel.findOne({ wallet_id: memberdetails4.refferal_id })
-                }
-
-                if (memberdetails5) {
-                    if (memberdetails5.wallet_id === refferalId) {
-                        let user = await userModel.findOne({ wallet_id: walletId })
-                        let modelDetail = new teamModel({ wallet_id: walletId, refferal_id: totalNulle[i].wallet_id, user_id: user.user_id })
-                        await modelDetail.save();
-                        await memberdetails5.updateOne({ refferal_details: [...memberdetails5.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.1 * 0.5, level: 1, rewardvalue: "10%" }] })
-                        let parent1 = await teamModel.findOne({ wallet_id: memberdetails5.refferal_id });
-                        let parent2
-                        if (parent1) {
-                            await parent1.updateOne({ refferal_details: [...parent1.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.2 * 0.5, level: 2, rewardvalue: "20%" }] })
-                            parent2 = await teamModel.findOne({ wallet_id: parent1.refferal_id });
-                        }
-                        let parent3
-                        if (parent2) {
-                            await parent2.updateOne({ refferal_details: [...parent2.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.2 * 0.5, level: 3, rewardvalue: "20%" }] })
-                            parent3 = await teamModel.findOne({ wallet_id: parent2.refferal_id });
-                        }
-
-                        if (parent3) {
-                            await parent3.updateOne({ refferal_details: [...parent3.refferal_details, { wallet_id: walletId, user_id: user.user_id, time: new Date(), reward: (req.body.amount) * 0.5 * 0.5, level: 4, rewardvalue: "50%" }] })
-                        }
-                        await totalNulle[i].updateOne({ $inc: { refferal_count: 1 } })
-                        return res.send({ message: `We have successfully added this member under the team of : ${totalNulle[i].refferal_id}`, user: user.user_id })
-                    }
-                }
-
             }
         }
     } catch (error) {
@@ -1167,34 +1294,11 @@ const getalldata = async (req, res) => {
         let memberDetails1 = await userModel.findOne({ user_id: id })
         let a = memberDetails1.wallet_id.slice('.')
         let b = "";
-        for (let index = 1; index <= leval; index++) {
-            b += `.${index}`;
+        if (leval > 0) {
+            b += `.${leval}`;
         }
         let plandata = planPrice == 20 ? "refs" : planPrice == 40 ? "ref40" : planPrice == 100 ? "ref100" : planPrice == 200 ? "ref200" : planPrice == 500 ? "ref500" : planPrice == 1000 ? "ref1000" : planPrice == 2000 ? "ref2000" : "ref4000"
-        if (planPrice == 20) {
-            setdata(plandata, a, b, ref, ref40, res)
-        }
-        if (planPrice == 40) {
-            setdata(plandata, a, b, ref40, ref100, res)
-        }
-        if (planPrice == 100) {
-            setdata(plandata, a, b, ref100, ref200, res)
-        }
-        if (planPrice == 200) {
-            setdata(plandata, a, b, ref200, ref500, res)
-        }
-        if (planPrice == 500) {
-            setdata(plandata, a, b, ref500, ref1000, res)
-        }
-        if (planPrice == 1000) {
-            setdata(plandata, a, b, ref1000, ref2000, res)
-        }
-        if (planPrice == 2000) {
-            setdata(plandata, a, b, ref2000, ref4000, res)
-        }
-        if (planPrice == 4000) {
-            setdata(plandata, a, b, ref4000, ref4000, res)
-        }
+        setdata(plandata, a, b, ref, ref40, res, Number(planPrice))
     } catch (error) {
         logger.error({
             message: "get controller fail",
