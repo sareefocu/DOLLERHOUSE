@@ -28,353 +28,550 @@ const findUpline = async (refId, refModel, refModel2) => {
         return null;
     }
 };
-async function getRef(refSelectedId, refId, id, refModel, refModel2, plandata, misseduser) {
-    const refSelected = await refModel.findOne({ refId: refSelectedId });
-    const refSelectedq = await refModel2.findOne({ refId: refSelectedId });
-    const refExists11 = await userModel.findOne({ wallet_id: id });
-    if (refSelectedq !== null) {
-        if (refSelected.referred.length < 2) {
-            const newRef = await refModel.create({
-                refId: id,
-                mainId: refId,
-                supporterId: refSelected.refId,
-                uid: refExists11.user_id,
-                referred: [],
-                misseduser: misseduser !== undefined ? misseduser : ""
-            });
-            refSelected.referred.push(newRef.refId);
-            refSelected.save();
-        } else {
-            await getRef(refSelected.referred[refSelected.nextRefIndex], refId, id, refModel, refModel2, plandata, misseduser);
-            refSelected.nextRefIndex = refSelected.nextRefIndex + 1 > 1 ? 0 : refSelected.nextRefIndex + 1;
-            await refSelected.save();
-        }
-    } else {
-        if (refSelected.referred.length < 2) {
-            const newRef = await refModel.create({
-                refId: id,
-                mainId: refId,
-                supporterId: refSelected.refId,
-                uid: refExists11.user_id,
-                referred: [],
-                misseduser: misseduser !== undefined ? misseduser : ""
-            });
-            refSelected.referred.push(newRef.refId);
-            refSelected.save();
-        } else {
-            await getRef(refSelected.referred[refSelected.nextRefIndex], refId, id, refModel, refModel2, plandata, misseduser);
-            refSelected.nextRefIndex = refSelected.nextRefIndex + 1 > 1 ? 0 : refSelected.nextRefIndex + 1;
-            await refSelected.save();
-        }
-    }
-}
+// async function getRef(refSelectedId, refId, id, refModel, refModel2, plandata, misseduser) {
+//     const refSelected = await refModel.findOne({ refId: refSelectedId });
+//     const refSelectedq = await refModel2.findOne({ refId: refSelectedId });
+//     const refExists11 = await userModel.findOne({ wallet_id: id });
+//     if (refSelectedq !== null) {
+//         if (refSelected.referred.length < 2) {
+//             const newRef = await refModel.create({
+//                 refId: id,
+//                 mainId: refId,
+//                 supporterId: refSelected.refId,
+//                 uid: refExists11.user_id,
+//                 referred: [],
+//                 misseduser: misseduser !== undefined ? misseduser : ""
+//             });
+//             refSelected.referred.push(newRef.refId);
+//             refSelected.save();
+//         } else {
+//             await getRef(refSelected.referred[refSelected.nextRefIndex], refId, id, refModel, refModel2, plandata, misseduser);
+//             refSelected.nextRefIndex = refSelected.nextRefIndex + 1 > 1 ? 0 : refSelected.nextRefIndex + 1;
+//             await refSelected.save();
+//         }
+//     } else {
+//         if (refSelected.referred.length < 2) {
+//             const newRef = await refModel.create({
+//                 refId: id,
+//                 mainId: refId,
+//                 supporterId: refSelected.refId,
+//                 uid: refExists11.user_id,
+//                 referred: [],
+//                 misseduser: misseduser !== undefined ? misseduser : ""
+//             });
+//             refSelected.referred.push(newRef.refId);
+//             refSelected.save();
+//         } else {
+//             await getRef(refSelected.referred[refSelected.nextRefIndex], refId, id, refModel, refModel2, plandata, misseduser);
+//             refSelected.nextRefIndex = refSelected.nextRefIndex + 1 > 1 ? 0 : refSelected.nextRefIndex + 1;
+//             await refSelected.save();
+//         }
+//     }
+// }
 
-async function getRef2(refSelectedId, refId, id, newLeval, refModel, refModel2, plandata) {
-    const refSelected = await refModel.findOne({ refId: refSelectedId });
+// async function getRef2(refSelectedId, refId, id, newLeval, refModel, refModel2, plandata) {
+//     const refSelected = await refModel.findOne({ refId: refSelectedId });
 
-    console.log("//=================//refId//==============", refId);
-    // const refExists11 = await userModel.findOne({ wallet_id: id });
-    // const refExists11new = await ref.findOne({ refId: id });
-    const refExists123aaa = await refModel.findOne({ refId: refId });
-    const refExists123 = await refModel.find({ uid: refExists123aaa.uid });
-    console.log("//=================//refSelected//==============", refExists123aaa);
+//     console.log("//=================//refId//==============", refId);
+//     // const refExists11 = await userModel.findOne({ wallet_id: id });
+//     // const refExists11new = await ref.findOne({ refId: id });
+//     const refExists123aaa = await refModel.findOne({ refId: refId });
+//     const refExists123 = await refModel.find({ uid: refExists123aaa.uid });
+//     console.log("//=================//refSelected//==============", refExists123aaa);
 
-    for (let index = 0; index < refExists123.length; index++) {
-        const element = refExists123[index];
-        const ids = refId;
-        let memberDetails12 = await refModel.aggregate([
-            {
-                $match: {
-                    refId: element.refId,
-                    leval: element.leval,
-                },
-            },
-            {
-                $graphLookup: {
-                    from: plandata,
-                    startWith: "$refId",
-                    connectFromField: "refId",
-                    depthField: "depthleval",
-                    connectToField: "supporterId",
-                    maxDepth: 4,
-                    as: "referBY",
-                },
-            },
-            {
-                $lookup: {
-                    from: "plan_buyeds",
-                    localField: "referBY.refId",
-                    foreignField: "wallet_id",
-                    as: "result",
-                },
-            },
-            {
-                $addFields: {
-                    referBY: {
-                        $map: {
-                            input: "$referBY",
-                            as: "refer",
-                            in: {
-                                $mergeObjects: [
-                                    "$$refer",
-                                    {
-                                        result: {
-                                            $filter: {
-                                                input: "$result",
-                                                as: "res",
-                                                cond: {
-                                                    $eq: [
-                                                        "$$res.wallet_id",
-                                                        "$$refer.refId",
-                                                    ],
-                                                },
-                                            },
-                                        },
-                                    },
-                                ],
-                            },
-                        },
-                    },
-                },
-            },
-            {
-                $project: {
-                    result: 0, // Optionally remove the 'result' field from the output
-                },
-            },
-        ]
-        )
-        if (memberDetails12[0].referBY.length <= 62) {
-            const refExists11new = await refModel.findOne({ refId: id });
-            const newuserdata = await refModel.find({ refId: id });
-            const refExists = await refModel.findOne({ refId: element.refId });
-            if (refExists.referred.length < 2) {
-                const newiduser = await refModel.findOne({ refId: id });
-                const newRef = await refModel.create({
-                    refId: id + `.` + newLeval,
-                    mainId: refId,
-                    supporterId: element.refId,
-                    uid: refExists11new?.uid,
-                    referred: [],
-                    leval: newuserdata.length
-                });
-                element.referred.push(newRef.refId);
-                element.save();
-            } else {
-                await getRef2(refExists.referred[refExists.nextRefIndex], refExists.referred[refExists.nextRefIndex], id, newLeval, refModel, refModel2, plandata);
-                refExists.nextRefIndex = refExists.nextRefIndex + 1 > 1 ? 0 : refExists.nextRefIndex + 1;
-                await refExists.save();
-            }
-        }
-    }
-}
+//     for (let index = 0; index < refExists123.length; index++) {
+//         const element = refExists123[index];
+//         const ids = refId;
+//         let memberDetails12 = await refModel.aggregate([
+//             {
+//                 $match: {
+//                     refId: element.refId,
+//                     leval: element.leval,
+//                 },
+//             },
+//             {
+//                 $graphLookup: {
+//                     from: plandata,
+//                     startWith: "$refId",
+//                     connectFromField: "refId",
+//                     depthField: "depthleval",
+//                     connectToField: "supporterId",
+//                     maxDepth: 4,
+//                     as: "referBY",
+//                 },
+//             },
+//             {
+//                 $lookup: {
+//                     from: "plan_buyeds",
+//                     localField: "referBY.refId",
+//                     foreignField: "wallet_id",
+//                     as: "result",
+//                 },
+//             },
+//             {
+//                 $addFields: {
+//                     referBY: {
+//                         $map: {
+//                             input: "$referBY",
+//                             as: "refer",
+//                             in: {
+//                                 $mergeObjects: [
+//                                     "$$refer",
+//                                     {
+//                                         result: {
+//                                             $filter: {
+//                                                 input: "$result",
+//                                                 as: "res",
+//                                                 cond: {
+//                                                     $eq: [
+//                                                         "$$res.wallet_id",
+//                                                         "$$refer.refId",
+//                                                     ],
+//                                                 },
+//                                             },
+//                                         },
+//                                     },
+//                                 ],
+//                             },
+//                         },
+//                     },
+//                 },
+//             },
+//             {
+//                 $project: {
+//                     result: 0, // Optionally remove the 'result' field from the output
+//                 },
+//             },
+//         ]
+//         )
+//         if (memberDetails12[0].referBY.length <= 62) {
+//             const refExists11new = await refModel.findOne({ refId: id });
+//             const newuserdata = await refModel.find({ refId: id });
+//             const refExists = await refModel.findOne({ refId: element.refId });
+//             if (refExists.referred.length < 2) {
+//                 const newiduser = await refModel.findOne({ refId: id });
+//                 const newRef = await refModel.create({
+//                     refId: id + `.` + newLeval,
+//                     mainId: refId,
+//                     supporterId: element.refId,
+//                     uid: refExists11new?.uid,
+//                     referred: [],
+//                     leval: newuserdata.length
+//                 });
+//                 element.referred.push(newRef.refId);
+//                 element.save();
+//             } else {
+//                 await getRef2(refExists.referred[refExists.nextRefIndex], refExists.referred[refExists.nextRefIndex], id, newLeval, refModel, refModel2, plandata);
+//                 refExists.nextRefIndex = refExists.nextRefIndex + 1 > 1 ? 0 : refExists.nextRefIndex + 1;
+//                 await refExists.save();
+//             }
+//         }
+//     }
+// }
 
-const processReferral = async (id, refId, refModel, refModel2, plandata) => {
+// const processReferral = async (id, refId, refModel, refModel2, plandata) => {
+//     try {
+//         if (!id) return 'Invalid id';
+//         console.log("id, refId", id, refId);
+//         const refExists = await rewardModel.findOne({ wallet_id: id });
+//         const idAlreadyExists = await refModel.findOne({ refId: id });
+//         if (idAlreadyExists) return 'Invalid id, already exists';
+//         const idAlreadyExists11 = await refModel.findOne({ refId: refExists.refferal });
+//         console.log("id, refId", refExists.refferal);
+//         if (idAlreadyExists11 == null) {
+//             console.log("idAlreadyExists", idAlreadyExists);
+//             const uplineData = await findUpline(refExists.refferal, refModel, refModel2);
+//             console.log("Upline Data:", uplineData);
+//             if (uplineData !== null) {
+//                 if (uplineData.referred.length < 2) {
+//                     const newRef = await refModel.create({
+//                         refId: id,
+//                         mainId: uplineData.refId,
+//                         misseduser: refExists.refferal,
+//                         supporterId: uplineData.refId || uplineData.refId,
+//                         uid: refExists.user_id,
+//                         referred: [],
+//                     });
+//                     uplineData.referred.push(id);
+//                     await uplineData.save(); // Save the changes to uplineData
+//                     console.log("uplineData", uplineData);
+//                 } else {
+//                     console.log("refExistsrefExists1.referred", uplineData.referred);
+//                     await getRef(uplineData.referred[uplineData.nextRefIndex], uplineData.refId, id, refModel, refModel2, plandata, refExists.refferal);
+//                     uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
+//                     await uplineData.save(); // Save the changes to uplineData
+//                 }
+//             } else {
+//                 const newRef = await refModel.create({
+//                     refId: id,
+//                     mainId: uplineData?.refId ? uplineData?.refId : null,
+//                     uid: refExists.user_id,
+//                     misseduser: refExists.refferal,
+//                     supporterId: uplineData?.refId ? uplineData?.refId : null,
+//                     referred: [],
+//                 });
+//             }
+//         }
+
+
+//         if (!refId) return res.send('Invalid refId');
+
+//         const refExists1 = await refModel.findOne({ refId: refId, leval: 0 });
+//         if (!refExists1) return res.send('Invalid referral link');
+
+//         const refExists123aaa = await refModel.findOne({ refId: refId });
+//         const refExists123 = await refModel.find({ uid: refExists123aaa.uid });
+//         for (let index = 0; index < refExists123.length; index++) {
+//             const element = refExists123[index];
+//             const refExists = await refModel.findOne({ refId: element.refId, leval: element.leval });
+//             let memberDetails12 = await refModel.aggregate([
+//                 {
+//                     $match: {
+//                         refId: element.refId,
+//                         leval: element.leval
+//                     },
+//                 },
+//                 {
+//                     $graphLookup: {
+//                         from: plandata,
+//                         startWith: "$refId",
+//                         connectFromField: "refId",
+//                         depthField: "depthleval",
+//                         connectToField: "supporterId",
+//                         maxDepth: 4,
+//                         as: "referBY",
+//                     },
+//                 },
+//                 {
+//                     $lookup: {
+//                         from: "plan_buyeds",
+//                         localField: "referBY.refId",
+//                         foreignField: "wallet_id",
+//                         as: "result",
+//                     },
+//                 },
+//                 {
+//                     $addFields: {
+//                         referBY: {
+//                             $map: {
+//                                 input: "$referBY",
+//                                 as: "refer",
+//                                 in: {
+//                                     $mergeObjects: [
+//                                         "$$refer",
+//                                         {
+//                                             result: {
+//                                                 $filter: {
+//                                                     input: "$result",
+//                                                     as: "res",
+//                                                     cond: {
+//                                                         $eq: [
+//                                                             "$$res.wallet_id",
+//                                                             "$$refer.refId",
+//                                                         ],
+//                                                     },
+//                                                 },
+//                                             },
+//                                         },
+//                                     ],
+//                                 },
+//                             },
+//                         },
+//                     },
+//                 },
+//                 {
+//                     $project: {
+//                         result: 0, // Optionally remove the 'result' field from the output
+//                     },
+//                 },
+//             ]
+//             )
+//             console.log("memberDetails12[0].referBY.length", memberDetails12[0].referBY.length);
+//             if (memberDetails12[0].referBY.length === 61) {
+//                 const refExistsrefExists1 = await refModel.findOne({ refId: element.supporterId, leval: element.leval });
+//                 const newLeval = element.leval + 1;
+//                 console.log(refExistsrefExists1.refId);
+//                 const uplineData = await findUpline(refExistsrefExists1.refId, refModel, refModel2)
+//                 console.log("Upline Data================================>>>>>>>>>>>:", uplineData);
+//                 if (uplineData !== null) {
+//                     if (uplineData.referred.length < 2) {
+//                         const newRef = await refModel.create({
+//                             refId: element.refId + `.` + newLeval,
+//                             mainId: uplineData.refId,
+//                             supporterId: uplineData.refId || uplineData.refId,
+//                             uid: element.uid,
+//                             referred: [],
+//                             leval: newLeval
+//                         });
+//                         uplineData.referred.push(newRef.refId);
+//                         await uplineData.save();
+//                     } else {
+//                         const newLeval = element.leval + 1;
+//                         console.log("refExistsrefExists1.referred", uplineData.referred);
+//                         await getRef2(uplineData.referred[uplineData.nextRefIndex], uplineData.refId, element.refId, newLeval, refModel, refModel2, plandata);
+//                         uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
+//                         await uplineData.save();
+//                     }
+//                 } else {
+//                     const newRef = await refModel.create({
+//                         refId: element.refId + `.` + newLeval,
+//                         mainId: null,
+//                         supporterId: null,
+//                         uid: element.uid,
+//                         referred: [],
+//                         leval: newLeval
+//                     });
+//                 }
+
+//             }
+//             if (memberDetails12[0].referBY.length <= 61) {
+//                 const refExists11 = await refModel.findOne({ refId: element.refId, leval: element.leval });
+//                 const refExists1140 = await refModel2.findOne({ uid: element.uid });
+//                 const refExists111 = await userModel.findOne({ wallet_id: id });
+//                 if (element.leval > 0 && refExists1140 === null) {
+//                     const uplineData = await findUpline(refExists11.refId, refModel, refModel2)
+//                     if (uplineData?.referred.length < 2) {
+//                         const newRef = await refModel.create({
+//                             refId: id,
+//                             mainId: uplineData.refId,
+//                             supporterId: uplineData.refId,
+//                             uid: refExists111.user_id,
+//                             referred: [],
+//                         });
+
+//                         uplineData.referred.push(newRef.refId);
+//                         await uplineData.save();
+//                         //   res.send(added);
+//                     } else {
+//                         await getRef(uplineData.referred[uplineData.nextRefIndex], refId, id, refModel, refModel2, plandata);
+//                         uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
+//                         await uplineData.save();
+//                     }
+//                 } else {
+//                     console.log("refExists", refExists);
+//                     if (refExists?.referred.length < 2) {
+//                         const newRef = await refModel.create({
+//                             refId: id,
+//                             mainId: refExists.refId,
+//                             supporterId: refExists.refId,
+//                             uid: refExists111.user_id,
+//                             referred: [],
+//                         });
+
+//                         refExists.referred.push(newRef.refId);
+//                         await refExists.save();
+//                         //   res.send(added);
+//                     } else {
+//                         await getRef(refExists.referred[refExists.nextRefIndex], refId, id, refModel, refModel2, plandata);
+//                         refExists.nextRefIndex = refExists.nextRefIndex + 1 > 1 ? 0 : refExists.nextRefIndex + 1;
+//                         await refExists.save();
+//                     }
+//                 }
+//             }
+//         }
+//     } catch (error) {
+//         console.error(error);
+//         return 'An error occurred';
+//     }
+// };
+let plandata = [20, 40, 100, 200, 500, 1000, 2000, 4000]
+async function register(referid, newid, amount) {
     try {
-        if (!id) return 'Invalid id';
-        console.log("id, refId", id, refId);
-        const refExists = await rewardModel.findOne({ wallet_id: id });
-        const idAlreadyExists = await refModel.findOne({ refId: id });
-        if (idAlreadyExists) return 'Invalid id, already exists';
-        const idAlreadyExists11 = await refModel.findOne({ refId: refExists.refferal });
-        console.log("id, refId", refExists.refferal);
-        if (idAlreadyExists11 == null) {
-            console.log("idAlreadyExists", idAlreadyExists);
-            const uplineData = await findUpline(refExists.refferal, refModel, refModel2);
-            console.log("Upline Data:", uplineData);
-            if (uplineData !== null) {
-                if (uplineData.referred.length < 2) {
-                    const newRef = await refModel.create({
-                        refId: id,
-                        mainId: uplineData.refId,
-                        misseduser: refExists.refferal,
-                        supporterId: uplineData.refId || uplineData.refId,
-                        uid: refExists.user_id,
-                        referred: [],
-                    });
-                    uplineData.referred.push(id);
-                    await uplineData.save(); // Save the changes to uplineData
-                    console.log("uplineData", uplineData);
-                } else {
-                    console.log("refExistsrefExists1.referred", uplineData.referred);
-                    await getRef(uplineData.referred[uplineData.nextRefIndex], uplineData.refId, id, refModel, refModel2, plandata, refExists.refferal);
-                    uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
-                    await uplineData.save(); // Save the changes to uplineData
+        const referData = await ref.find({ "refId": referid, "amount": amount })
+        console.log(referData);
+        const refExists111 = await userModel.findOne({ wallet_id: newid.split(".")[0] });
+        const newRefDoc = new ref({
+            user: newid,
+            reffre: !referData ? referData[0]["mid"] : 0,
+            L: 0,
+            R: 0,
+            mid: newid,
+            amount: amount,
+            uid: refExists111?.user_id,
+            leval: 0,
+            referred: [],
+            refId: newid,
+            missedusers: [],
+            misseduser: !referData ? referData[0]["refId"] : 0,
+            mainId: referid,
+            supporterId: !referData ? referData[0]["refId"] : 0,
+        });
+        await newRefDoc.save();
+        let test = 0;
+        let LL = [referData[0]["L"], referData[0]["R"]];
+        console.log(LL);
+        if (referData[0]["L"] == 0) {
+            await leftPositionCheck(referData[0]["refId"], newid, amount);
+        } else if (referData[0]["R"] == 0) {
+            await rightPositionCheck(referData[0]["refId"], newid, amount);
+        } else {
+            while (true) {
+                for (let i of LL) {
+                    if (i !== 0) {
+                        const status = await leftPositionCheck(i, newid, amount);
+                        if (status === 1) {
+                            test = 1;
+                            console.log("for loop brake");
+                            break;
+                        }
+                    }
                 }
-            } else {
-                const newRef = await refModel.create({
-                    refId: id,
-                    mainId: uplineData?.refId ? uplineData?.refId : null,
-                    uid: refExists.user_id,
-                    misseduser: refExists.refferal,
-                    supporterId: uplineData?.refId ? uplineData?.refId : null,
-                    referred: [],
-                });
+                if (test === 1) {
+                    console.log("while loop brake");
+                    break;
+                }
+                for (let i of LL) {
+                    if (i !== 0) {
+                        const status = await rightPositionCheck(i, newid, amount);
+                        if (status === 1) {
+                            test = 1;
+                            break;
+                        }
+                    }
+                }
+                if (test === 1) {
+                    break;
+                }
+                let RR = [];
+                for (let k of LL) {
+                    if (k != 0) {
+                        const a = await ref.find({ "refId": k, "amount": amount })
+                        RR.push(a[0]["L"]);
+                    }
+                }
+                for (let k of LL) {
+                    if (k != 0) {
+                        const a = await ref.find({ "refId": k, "amount": amount })
+                        RR.push(a[0]["R"]);
+                    }
+                }
+                LL = RR;
             }
         }
-
-
-        if (!refId) return res.send('Invalid refId');
-
-        const refExists1 = await refModel.findOne({ refId: refId, leval: 0 });
-        if (!refExists1) return res.send('Invalid referral link');
-
-        const refExists123aaa = await refModel.findOne({ refId: refId });
-        const refExists123 = await refModel.find({ uid: refExists123aaa.uid });
-        for (let index = 0; index < refExists123.length; index++) {
-            const element = refExists123[index];
-            const refExists = await refModel.findOne({ refId: element.refId, leval: element.leval });
-            let memberDetails12 = await refModel.aggregate([
-                {
-                    $match: {
-                        refId: element.refId,
-                        leval: element.leval
-                    },
-                },
-                {
-                    $graphLookup: {
-                        from: plandata,
-                        startWith: "$refId",
-                        connectFromField: "refId",
-                        depthField: "depthleval",
-                        connectToField: "supporterId",
-                        maxDepth: 4,
-                        as: "referBY",
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "plan_buyeds",
-                        localField: "referBY.refId",
-                        foreignField: "wallet_id",
-                        as: "result",
-                    },
-                },
-                {
-                    $addFields: {
-                        referBY: {
-                            $map: {
-                                input: "$referBY",
-                                as: "refer",
-                                in: {
-                                    $mergeObjects: [
-                                        "$$refer",
-                                        {
-                                            result: {
-                                                $filter: {
-                                                    input: "$result",
-                                                    as: "res",
-                                                    cond: {
-                                                        $eq: [
-                                                            "$$res.wallet_id",
-                                                            "$$refer.refId",
-                                                        ],
-                                                    },
-                                                },
-                                            },
-                                        },
-                                    ],
-                                },
+    } catch (e) {
+        console.error("Error:", e);
+    }
+}
+async function leftPositionCheck(L, user_mid, amount) {
+    const left = await ref.find({ "refId": L, "amount": amount })
+    if (left[0]["L"] == 0) {
+        console.log("update position in L");
+        await ref.updateOne({ "refId": L, "amount": amount }, { "$set": { "L": user_mid } });
+        await ref.updateOne({ "refId": L, "amount": amount }, { "$set": { "referred": [user_mid] } });
+        await ref.updateOne({ "refId": user_mid, "amount": amount }, { $set: { "supporterId": L } });
+        return 1;
+    } else {
+        return 0;
+    }
+}
+async function rightPositionCheck(L, user_mid, amount) {
+    const left = await ref.find({ "refId": L, "amount": amount })
+    if (left[0]["R"] == 0) {
+        console.log("update position in R");
+        await ref.updateOne({ "refId": L, "amount": amount }, { "$set": { "R": user_mid } });
+        await ref.updateOne({ "refId": L, "amount": amount }, { "$push": { "referred": user_mid } });
+        await ref.updateOne({ "refId": user_mid, "amount": amount }, { $set: { "supporterId": L } });
+        return 1;
+    } else {
+        return 0;
+    }
+}
+const dat = async (UIDS, referid, amount) => {
+    const d1 = await ref.aggregate([
+        {
+            $match: {
+                uid: UIDS.uid,
+                amount: amount,
+            },
+        },
+        {
+            $graphLookup: {
+                from: "refs",
+                startWith: "$refId",
+                connectFromField: "refId",
+                depthField: "depthleval",
+                connectToField: "supporterId",
+                maxDepth: 4,
+                as: "referBY",
+                restrictSearchWithMatch: { amount: amount }
+            }
+        }
+    ]
+    ) // Convert cursor to array
+    for (let index = 0; index < d1.length; index++) {
+        const element = d1[index];
+        if (element.referBY.length <= 62) {
+            const newLeval = element.leval + 1;
+            const refExistsrefExists1 = await ref.findOne({ refId: element.refId, leval: element.leval });
+            const index1 = plandata.findIndex(element1 => element1.amount === element.amount);
+            if (element.referBY.length == 61) {
+                findUpline(refExistsrefExists1.refId, plandata[index1 + 1]).then(async (uplineData) => {
+                    const refExistsrefExists2 = await ref.find({ refId: referid, amount: amount })
+                    console.log("", refExistsrefExists2.length - 1 == 0 ? refExistsrefExists1.refId : refExistsrefExists1.refId + `.` + refExistsrefExists2.length);
+                    const d2 = await ref.aggregate([
+                        {
+                            $match: {
+                                refId: refExistsrefExists2.length - 1 == 0 ? refExistsrefExists1.refId : refExistsrefExists1.refId + `.` + refExistsrefExists2.length,
+                                amount: amount,
                             },
                         },
-                    },
-                },
-                {
-                    $project: {
-                        result: 0, // Optionally remove the 'result' field from the output
-                    },
-                },
-            ]
-            )
-            console.log("memberDetails12[0].referBY.length", memberDetails12[0].referBY.length);
-            if (memberDetails12[0].referBY.length === 61) {
-                const refExistsrefExists1 = await refModel.findOne({ refId: element.supporterId, leval: element.leval });
-                const newLeval = element.leval + 1;
-                console.log(refExistsrefExists1.refId);
-                const uplineData = await findUpline(refExistsrefExists1.refId, refModel, refModel2)
-                console.log("Upline Data================================>>>>>>>>>>>:", uplineData);
-                if (uplineData !== null) {
-                    if (uplineData.referred.length < 2) {
-                        const newRef = await refModel.create({
-                            refId: element.refId + `.` + newLeval,
-                            mainId: uplineData.refId,
-                            supporterId: uplineData.refId || uplineData.refId,
-                            uid: element.uid,
-                            referred: [],
-                            leval: newLeval
-                        });
-                        uplineData.referred.push(newRef.refId);
-                        await uplineData.save();
-                    } else {
-                        const newLeval = element.leval + 1;
-                        console.log("refExistsrefExists1.referred", uplineData.referred);
-                        await getRef2(uplineData.referred[uplineData.nextRefIndex], uplineData.refId, element.refId, newLeval, refModel, refModel2, plandata);
-                        uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
-                        await uplineData.save();
+                        {
+                            $graphLookup: {
+                                from: "refs",
+                                startWith: "$refId",
+                                connectFromField: "refId",
+                                depthField: "depthleval",
+                                connectToField: "supporterId",
+                                maxDepth: 4,
+                                as: "referBY",
+                                restrictSearchWithMatch: { amount: amount }
+                            }
+                        }
+                    ]
+                    )
+                    console.log("d2.length", d2.length);
+                    for (let index = 0; index < d2.length; index++) {
+                        const element1 = d2[index];
+                        if (element1.referBY.length <= 62) {
+                            if (element1.supporterId === 0) {
+                                const checkalredyexist = await ref.findOne({ refId: element1.refId + `.` + refExistsrefExists2.length, leval: element.leval });
+                                if (checkalredyexist === null) {
+                                    const newRefDoc = new ref({
+                                        "user": element1.user,
+                                        "reffre": 0,
+                                        "L": 0,
+                                        "R": 0,
+                                        "mid": element1.mid,
+                                        "amount": 20,
+                                        "uid": element1.uid,
+                                        "leval": newLeval,
+                                        "referred": [],
+                                        "refId": element1.refId + `.` + refExistsrefExists2.length,
+                                        "missedusers": [],
+                                        "mainId": 0,
+                                        "supporterId": 0,
+                                    });
+                                    await newRefDoc.save();
+                                }
+                            } else {
+                                const checkalredyexist = await ref.findOne({ refId: element1.refId + `.` + refExistsrefExists2.length, leval: element.leval });
+                                if (checkalredyexist === null) {
+                                    await register(element1.supporterId, element1.refId + `.` + refExistsrefExists2.length, amount);
+                                }
+                            }
+                        }
                     }
-                } else {
-                    const newRef = await refModel.create({
-                        refId: element.refId + `.` + newLeval,
-                        mainId: null,
-                        supporterId: null,
-                        uid: element.uid,
-                        referred: [],
-                        leval: newLeval
-                    });
-                }
-
-            }
-            if (memberDetails12[0].referBY.length <= 61) {
-                const refExists11 = await refModel.findOne({ refId: element.refId, leval: element.leval });
-                const refExists1140 = await refModel2.findOne({ uid: element.uid });
-                const refExists111 = await userModel.findOne({ wallet_id: id });
-                if (element.leval > 0 && refExists1140 === null) {
-                    const uplineData = await findUpline(refExists11.refId, refModel, refModel2)
-                    if (uplineData?.referred.length < 2) {
-                        const newRef = await refModel.create({
-                            refId: id,
-                            mainId: uplineData.refId,
-                            supporterId: uplineData.refId,
-                            uid: refExists111.user_id,
-                            referred: [],
-                        });
-
-                        uplineData.referred.push(newRef.refId);
-                        await uplineData.save();
-                        //   res.send(added);
-                    } else {
-                        await getRef(uplineData.referred[uplineData.nextRefIndex], refId, id, refModel, refModel2, plandata);
-                        uplineData.nextRefIndex = uplineData.nextRefIndex + 1 > 1 ? 0 : uplineData.nextRefIndex + 1;
-                        await uplineData.save();
-                    }
-                } else {
-                    console.log("refExists", refExists);
-                    if (refExists?.referred.length < 2) {
-                        const newRef = await refModel.create({
-                            refId: id,
-                            mainId: refExists.refId,
-                            supporterId: refExists.refId,
-                            uid: refExists111.user_id,
-                            referred: [],
-                        });
-
-                        refExists.referred.push(newRef.refId);
-                        await refExists.save();
-                        //   res.send(added);
-                    } else {
-                        await getRef(refExists.referred[refExists.nextRefIndex], refId, id, refModel, refModel2, plandata);
-                        refExists.nextRefIndex = refExists.nextRefIndex + 1 > 1 ? 0 : refExists.nextRefIndex + 1;
-                        await refExists.save();
-                    }
+                })
+            } else {
+                const refExistsrefExists1 = await ref.findOne({ refId: element.supporterId, leval: element.leval });
+                console.log(refExistsrefExists1);
+                if (element.supporterId != 0) {
+                    await dat(refExistsrefExists1.uid, amount)
                 }
             }
         }
-    } catch (error) {
-        console.error(error);
-        return 'An error occurred';
     }
-};
-
+}
 const createPlanController = async (req, res) => {
     let WalletId = (req.body.wallet_id)?.toLowerCase();
     let Refferal = (req.body.refferal)?.toLowerCase();
@@ -390,60 +587,95 @@ const createPlanController = async (req, res) => {
             let user = new userModel({ wallet_id: WalletId, user_id: userId })
             await user.save();
         }
-        const refId = Refferal;
-        const id = WalletId;
-        let plandata = req.body.plan_details[0].amount == 20 ? "refs" : req.body.plan_details[0].amount == 40 ? "ref40" : req.body.plan_details[0].amount == 100 ? "ref100" : req.body.plan_details[0].amount == 200 ? "ref200" : req.body.plan_details[0].amount == 500 ? "ref500" : req.body.plan_details[0].amount == 1000 ? "ref1000" : req.body.plan_details[0].amount == 2000 ? "ref2000" : "ref4000"
-        if (req.body.plan_details[0].amount == 40) {
-            console.log("req.body.plan_details[0].amount", req.body.plan_details[0].amount);
-            await processReferral(id, refId, ref40, ref100, plandata).then(() => {
-                console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-            }).catch((error) => {
-                console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-            })
+        const referid = Refferal;
+        const newid = WalletId;
+        const refExistsrefExists1 = await ref.findOne({ refId: Refferal });
+        const d1 = await ref.aggregate([
+            {
+                $match: {
+                    uid: refExistsrefExists1.uid,
+                    amount: req.body.plan_details[0].amount,
+                },
+            },
+            {
+                $graphLookup: {
+                    from: "refs",
+                    startWith: "$refId",
+                    connectFromField: "refId",
+                    depthField: "depthleval",
+                    connectToField: "supporterId",
+                    maxDepth: 4,
+                    as: "referBY",
+                    restrictSearchWithMatch: { amount: req.body.plan_details[0].amount }
+                }
+            }
+        ]
+        )
+        await dat(refExistsrefExists1, referid, req.body.plan_details[0].amount)
+        console.log(d1);
+        for (let index = 0; index < d1.length; index++) {
+            const element = d1[index];
+            if (element.referBY.length <= 61) {
+                const refExistsrefExists1 = await ref.findOne({ refId: newid });
+                if (refExistsrefExists1 === null) {
+                    console.log("element.refId, newid, amount, newid", element.refId, newid, amount, newid);
+                    await register(element.refId, newid, amount).then(() => {
+                        return res.send({ message: `We have successfully added this member under the team of : ${newid}` })
+                    })
+                }
+            }
         }
-        console.log("req.body.plan_details[0].amount", req.body.plan_details[0].amount);
-        if (req.body.plan_details[0].amount == 100) {
-            await processReferral(id, refId, ref100, ref200, plandata).then(() => {
-                console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-            }).catch((error) => {
-                console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-            })
-        }
-        if (req.body.plan_details[0].amount == 200) {
-            await processReferral(id, refId, ref200, ref500, plandata).then(() => {
-                console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-            }).catch((error) => {
-                console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-            })
-        }
-        if (req.body.plan_details[0].amount == 500) {
-            await processReferral(id, refId, ref500, ref1000, plandata).then(() => {
-                console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-            }).catch((error) => {
-                console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-            })
-        }
-        if (req.body.plan_details[0].amount == 1000) {
-            await processReferral(id, refId, ref1000, ref2000, plandata).then(() => {
-                console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-            }).catch((error) => {
-                console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-            })
-        }
-        if (req.body.plan_details[0].amount == 2000) {
-            await processReferral(id, refId, ref2000, ref4000, plandata).then(() => {
-                console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-            }).catch((error) => {
-                console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-            })
-        }
-        if (req.body.plan_details[0].amount == 4000) {
-            await processReferral(id, refId, ref4000, ref4000, plandata).then(() => {
-                console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-            }).catch((error) => {
-                console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-            })
-        }
+
+        // if (req.body.plan_details[0].amount == 40) {
+        //     console.log("req.body.plan_details[0].amount", req.body.plan_details[0].amount);
+        //     await processReferral(id, refId, ref40, ref100, plandata).then(() => {
+        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
+        //     }).catch((error) => {
+        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
+        //     })
+        // }
+        // if (req.body.plan_details[0].amount == 100) {
+        //     await processReferral(id, refId, ref100, ref200, plandata).then(() => {
+        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
+        //     }).catch((error) => {
+        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
+        //     })
+        // }
+        // if (req.body.plan_details[0].amount == 200) {
+        //     await processReferral(id, refId, ref200, ref500, plandata).then(() => {
+        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
+        //     }).catch((error) => {
+        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
+        //     })
+        // }
+        // if (req.body.plan_details[0].amount == 500) {
+        //     await processReferral(id, refId, ref500, ref1000, plandata).then(() => {
+        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
+        //     }).catch((error) => {
+        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
+        //     })
+        // }
+        // if (req.body.plan_details[0].amount == 1000) {
+        //     await processReferral(id, refId, ref1000, ref2000, plandata).then(() => {
+        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
+        //     }).catch((error) => {
+        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
+        //     })
+        // }
+        // if (req.body.plan_details[0].amount == 2000) {
+        //     await processReferral(id, refId, ref2000, ref4000, plandata).then(() => {
+        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
+        //     }).catch((error) => {
+        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
+        //     })
+        // }
+        // if (req.body.plan_details[0].amount == 4000) {
+        //     await processReferral(id, refId, ref4000, ref4000, plandata).then(() => {
+        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
+        //     }).catch((error) => {
+        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
+        //     })
+        // }
         let previousePlan = await planModel.findOne({ wallet_id: WalletId })
         let time = new Date()
         let requireObject = {
