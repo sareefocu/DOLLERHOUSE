@@ -13,21 +13,22 @@ import ref2000 from "../models/RefSchema6.js";
 import ref4000 from "../models/RefSchema7.js";
 import { house_rewards_service, level_reward_service } from "../services/houseRewardService.js";
 const logger = logHelper.getInstance({ appName: constants.app_name })
-const findUpline = async (refId, refModel, refModel2) => {
+const findUpline = async (refId, amount) => {
+    console.log("refId, amount=====================>", refId, amount);
     const refData = await ref.findOne({ refId: refId });
     if (refData) {
-        // Check if the ref exists in the refModel2 collection
-        const ref40Data = await refModel.findOne({ refId: refData.refId });
-        console.log("ref40Data", ref40Data);
-        if (ref40Data !== null) {
-            return ref40Data;
+        const refData11 = await ref.findOne({ refId: refId, amount: amount });
+        if (refData11 !== null) {
+            return refData11;
         } else {
-            return findUpline(refData.mainId, refModel, refModel2);
+            return findUpline(refData.mainId, amount);
         }
     } else {
         return null;
     }
 };
+
+
 // async function getRef(refSelectedId, refId, id, refModel, refModel2, plandata, misseduser) {
 //     const refSelected = await refModel.findOne({ refId: refSelectedId });
 //     const refSelectedq = await refModel2.findOne({ refId: refSelectedId });
@@ -375,10 +376,10 @@ const findUpline = async (refId, refModel, refModel2) => {
 //     }
 // };
 let plandata = [20, 40, 100, 200, 500, 1000, 2000, 4000]
-async function register(referid, newid, amount) {
+async function register(referid, newid, amount, missuser) {
     try {
         const referData = await ref.find({ "refId": referid, "amount": amount })
-        console.log(referData);
+        console.log("referid, newid, amount", referid, newid, amount, missuser);
         const refExists111 = await userModel.findOne({ wallet_id: newid.split(".")[0] });
         const newRefDoc = new ref({
             user: newid,
@@ -392,7 +393,7 @@ async function register(referid, newid, amount) {
             referred: [],
             refId: newid,
             missedusers: [],
-            misseduser: !referData ? referData[0]["refId"] : 0,
+            misseduser: missuser,
             mainId: referid,
             supporterId: !referData ? referData[0]["refId"] : 0,
         });
@@ -573,8 +574,9 @@ const dat = async (UIDS, referid, amount) => {
     }
 }
 const createPlanController = async (req, res) => {
-    let WalletId = (req.body.wallet_id)?.toLowerCase();
-    let Refferal = (req.body.refferal)?.toLowerCase();
+    let WalletId = req.body.wallet_id
+    let refferalId = req.body.refferalId
+    let amount = Number(req.body.amount === null ? 20 : req.body.amount)
     try {
         var user = await userModel.findOne({ wallet_id: WalletId });
         let userId
@@ -587,131 +589,138 @@ const createPlanController = async (req, res) => {
             let user = new userModel({ wallet_id: WalletId, user_id: userId })
             await user.save();
         }
-        const referid = Refferal;
+        const referid = refferalId;
         const newid = WalletId;
-        const refExistsrefExists1 = await ref.findOne({ refId: Refferal });
-        const d1 = await ref.aggregate([
-            {
-                $match: {
-                    uid: refExistsrefExists1.uid,
+        const refExistsrefExists1 = await ref.findOne({ refId: refferalId, amount: req.body.plan_details[0].amount });
+        if (refExistsrefExists1 === null) {
+            const refExistsrefExists1 = await ref.findOne({ refId: WalletId });
+            console.log("refExistsrefExists1",);
+            if (refExistsrefExists1.uid !== 1) {
+                const dt = await findUpline(refferalId, req.body.plan_details[0].amount)
+                await register(dt.refId, WalletId, amount, refferalId)
+                let previousePlan = await planModel.findOne({ wallet_id: WalletId })
+                let time = new Date()
+                let requireObject = {
                     amount: req.body.plan_details[0].amount,
-                },
-            },
-            {
-                $graphLookup: {
-                    from: "refs",
-                    startWith: "$refId",
-                    connectFromField: "refId",
-                    depthField: "depthleval",
-                    connectToField: "supporterId",
-                    maxDepth: 4,
-                    as: "referBY",
-                    restrictSearchWithMatch: { amount: req.body.plan_details[0].amount }
+                    plan_name: req.body.plan_details[0].plan_name,
+                    type: req.body.plan_details[0].type,
+                    Time: time
                 }
+                if (previousePlan) {
+                    await previousePlan.updateOne({ plan_details: [...previousePlan.plan_details, requireObject] })
+                    await house_rewards_service(WalletId, dt.refId, requireObject, previousePlan.user_id)
+                    await level_reward_service(WalletId, dt.refId, requireObject, previousePlan.user_id);
+                    return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
+                } else {
+                    if (!user) {
+                        let newplan = new planModel({ wallet_id: WalletId, user_id: userId, amount: req.body.amount, refferal: dt.refId, plan_details: [requireObject] })
+                        await newplan.save();
+                    } else {
+                        let newplan = new planModel({ wallet_id: WalletId, user_id: user.user_id, amount: req.body.amount, refferal: dt.refId, plan_details: [requireObject] })
+                        await newplan.save();
+                    }
+                }
+                let rewarddetails = await rewardModel.findOne({ wallet_id: WalletId });
+                if (!rewarddetails) {
+                    let reward = new rewardModel({ wallet_id: WalletId, user_id: userId, refferal: refferalId })
+                    await reward.save();
+                }
+                await house_rewards_service(WalletId, refferalId, requireObject, userId)
+                await level_reward_service(WalletId, refferalId, requireObject, userId)
+                return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
+            } else {
+                await register(refferalId, WalletId, amount)
+                const previousePlan = await planModel.findOne({ wallet_id: WalletId })
+                let time = new Date()
+                let requireObject = {
+                    amount: req.body.plan_details[0].amount,
+                    plan_name: req.body.plan_details[0].plan_name,
+                    type: req.body.plan_details[0].type,
+                    Time: time
+                }
+                if (previousePlan) {
+                    await previousePlan.updateOne({ plan_details: [...previousePlan.plan_details, requireObject] })
+                    return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
+                } else {
+                    if (!user) {
+                        let newplan = new planModel({ wallet_id: WalletId, user_id: userId, amount: req.body.amount, refferal: refferalId, plan_details: [requireObject] })
+                        await newplan.save();
+                    } else {
+                        let newplan = new planModel({ wallet_id: WalletId, user_id: user.user_id, amount: req.body.amount, refferal: refferalId, plan_details: [requireObject] })
+                        await newplan.save();
+                    }
+                }
+                return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
             }
-        ]
-        )
-        await dat(refExistsrefExists1, referid, req.body.plan_details[0].amount)
-        console.log(d1);
-        for (let index = 0; index < d1.length; index++) {
-            const element = d1[index];
-            if (element.referBY.length <= 61) {
-                const refExistsrefExists1 = await ref.findOne({ refId: newid });
-                if (refExistsrefExists1 === null) {
-                    console.log("element.refId, newid, amount, newid", element.refId, newid, amount, newid);
-                    await register(element.refId, newid, amount).then(() => {
-                        return res.send({ message: `We have successfully added this member under the team of : ${newid}` })
-                    })
+        } else {
+            const d1 = await ref.aggregate([
+                {
+                    $match: {
+                        uid: refExistsrefExists1.uid,
+                        amount: Number(req.body.plan_details[0].amount),
+                    },
+                },
+                {
+                    $graphLookup: {
+                        from: "refs",
+                        startWith: "$refId",
+                        connectFromField: "refId",
+                        depthField: "depthleval",
+                        connectToField: "supporterId",
+                        maxDepth: 4,
+                        as: "referBY",
+                        restrictSearchWithMatch: { amount: Number(req.body.plan_details[0].amount) },
+                    },
+                },
+            ]
+            )
+            await dat(refExistsrefExists1, referid, req.body.plan_details[0].amount)
+            for (let index = 0; index < d1.length; index++) {
+                const element = d1[index];
+                if (element.referBY.length <= 61) {
+                    const refExistsrefExists1 = await ref.findOne({ refId: WalletId, amount: req.body.plan_details[0].amount });
+                    const perenthavebuyslote = await ref.findOne({ refId: refferalId, amount: req.body.plan_details[0].amount });
+                    console.log("perenthavebuyslote====>>>>>>>>>>>>>>>>>>", perenthavebuyslote);
+                        if (refExistsrefExists1 === null) {
+                            console.log("element.refId,================================>>>>>>>>>>>>>>>>>>>>>>>>>>>", element.refId, newid, req.body.plan_details[0].amount, newid);
+                        await register(element.refId, newid, req.body.plan_details[0].amount)
+                        let previousePlan = await planModel.findOne({ wallet_id: WalletId })
+                        let time = new Date()
+                        let requireObject = {
+                            amount: req.body.plan_details[0].amount,
+                            plan_name: req.body.plan_details[0].plan_name,
+                            type: req.body.plan_details[0].type,
+                            Time: time
+                        }
+                        if (previousePlan) {
+                            await previousePlan.updateOne({ plan_details: [...previousePlan.plan_details, requireObject] })
+                            await house_rewards_service(WalletId, refferalId, requireObject, previousePlan.user_id)
+                            await level_reward_service(WalletId, refferalId, requireObject, previousePlan.user_id);
+                            return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
+                        } else {
+                            if (!user) {
+                                let newplan = new planModel({ wallet_id: WalletId, user_id: userId, amount: req.body.amount, refferal: refferalId, plan_details: [requireObject] })
+                                await newplan.save();
+                            } else {
+                                let newplan = new planModel({ wallet_id: WalletId, user_id: user.user_id, amount: req.body.amount, refferal: refferalId, plan_details: [requireObject] })
+                                await newplan.save();
+                            }
+                        }
+                        let rewarddetails = await rewardModel.findOne({ wallet_id: WalletId });
+                        if (!rewarddetails) {
+                            let reward = new rewardModel({ wallet_id: WalletId, user_id: userId, refferal: refferalId })
+                            await reward.save();
+                        }
+                        await house_rewards_service(WalletId, refferalId, requireObject, userId)
+                        await level_reward_service(WalletId, refferalId, requireObject, userId)
+                        return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
+                    }
                 }
             }
         }
 
-        // if (req.body.plan_details[0].amount == 40) {
-        //     console.log("req.body.plan_details[0].amount", req.body.plan_details[0].amount);
-        //     await processReferral(id, refId, ref40, ref100, plandata).then(() => {
-        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-        //     }).catch((error) => {
-        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-        //     })
-        // }
-        // if (req.body.plan_details[0].amount == 100) {
-        //     await processReferral(id, refId, ref100, ref200, plandata).then(() => {
-        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-        //     }).catch((error) => {
-        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-        //     })
-        // }
-        // if (req.body.plan_details[0].amount == 200) {
-        //     await processReferral(id, refId, ref200, ref500, plandata).then(() => {
-        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-        //     }).catch((error) => {
-        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-        //     })
-        // }
-        // if (req.body.plan_details[0].amount == 500) {
-        //     await processReferral(id, refId, ref500, ref1000, plandata).then(() => {
-        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-        //     }).catch((error) => {
-        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-        //     })
-        // }
-        // if (req.body.plan_details[0].amount == 1000) {
-        //     await processReferral(id, refId, ref1000, ref2000, plandata).then(() => {
-        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-        //     }).catch((error) => {
-        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-        //     })
-        // }
-        // if (req.body.plan_details[0].amount == 2000) {
-        //     await processReferral(id, refId, ref2000, ref4000, plandata).then(() => {
-        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-        //     }).catch((error) => {
-        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-        //     })
-        // }
-        // if (req.body.plan_details[0].amount == 4000) {
-        //     await processReferral(id, refId, ref4000, ref4000, plandata).then(() => {
-        //         console.log("====================>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>done<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<==================================");
-        //     }).catch((error) => {
-        //         console.log("================error===>>>>>>>>>>>>>>>>>error>>>>>>>>>>>>>>>>>>>>>>>>>>error<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<=error=====================error===", error);
-        //     })
-        // }
-        let previousePlan = await planModel.findOne({ wallet_id: WalletId })
-        let time = new Date()
-        let requireObject = {
-            amount: req.body.plan_details[0].amount,
-            plan_name: req.body.plan_details[0].plan_name,
-            type: req.body.plan_details[0].type,
-            Time: time
-        }
-        if (previousePlan) {
-            await previousePlan.updateOne({ plan_details: [...previousePlan.plan_details, requireObject] })
-            await house_rewards_service(WalletId, Refferal, requireObject, previousePlan.user_id)
-            await level_reward_service(WalletId, Refferal, requireObject, previousePlan.user_id);
-            return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
-        } else {
-            if (!user) {
-                let newplan = new planModel({ wallet_id: WalletId, user_id: userId, amount: req.body.amount, refferal: Refferal, plan_details: [requireObject] })
-                await newplan.save();
-            } else {
-                let newplan = new planModel({ wallet_id: WalletId, user_id: user.user_id, amount: req.body.amount, refferal: Refferal, plan_details: [requireObject] })
-                await newplan.save();
-            }
-        }
-        let rewarddetails = await rewardModel.findOne({ wallet_id: WalletId });
-        if (!rewarddetails) {
-            let reward = new rewardModel({ wallet_id: WalletId, user_id: userId, refferal: Refferal })
-            await reward.save();
-        }
-        await house_rewards_service(WalletId, Refferal, requireObject, userId)
-        await level_reward_service(WalletId, Refferal, requireObject, userId)
-        return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
     } catch (error) {
-        logger.error({
-            message: "Could not save plan",
-            errors: error.message
-        })
-        throw error
+        console.log("error.message", error.message);
     }
 };
 const getPlanController = async (req, res) => {

@@ -4,148 +4,126 @@ import planModel from "../models/plan_model.js"
 import rewardModel from "../models/reward_model.js"
 const logger = logHelper.getInstance({ appName: constants.app_name })
 const findUpline = async (wallet_id, obj, houseValue, userId, childWallet) => {
-    // Find the ref data based on the refId in the ref collection
+    try {
+        const buyed_plan1 = await planModel.findOne({ wallet_id: wallet_id });
+        if (buyed_plan1) {
+            const maxValue = buyed_plan1?.plan_details.reduce((max, obj) => {
+                let numericValue = parseInt(obj.amount);
+                return numericValue > max ? numericValue : max;
+            }, parseInt(buyed_plan1?.plan_details[0].amount));
 
-    const buyed_plan1 = await planModel.findOne({ wallet_id: wallet_id });
-    let maxValue = buyed_plan1?.plan_details.reduce((max, obj) => {
-        let numericValue = parseInt(obj.amount); // or parseFloat(obj.value) for floating point numbers
-        return numericValue > max ? numericValue : max;
-    }, parseInt(buyed_plan1?.plan_details[0].amount));
-    if (buyed_plan1) {
-        if (maxValue >= obj.amount) {
-            let reward_details = await rewardModel.findOne({ wallet_id: wallet_id })
-            const filteredRewards = reward_details.house_reward.filter(reward => reward.amount == obj.amount);
-            const filteredRewardsLength = filteredRewards.length + 1;
-            const result = filteredRewardsLength % 4 === 0 ? filteredRewardsLength / 4 : filteredRewardsLength / 4;
-            const resultString = result.toString();
-            const splitResult = resultString.split(".")
-            console.log("reward_details", filteredRewards.length)
-            if (filteredRewards.length <= 2) {
-                console.log("iam herehereherehere")
-                console.log("iam herehereherehere")
-                console.log("iam herehereherehere")
-                console.log("iam herehereherehere")
-                let requireObject = {
-                    house_reward: houseValue,
-                    ...obj,
-                    user_id: userId,
-                    invited_member_id: childWallet,
-                }
-                await reward_details.updateOne({ house_reward: [...reward_details.house_reward, requireObject] })
-                await reward_details.updateOne({ $inc: { invite: 1 } })
-                return reward_details
-            } else {
-                if (Number(resultString) > 0 && splitResult.length === 1) {
-                    console.log("iam here")
-                    let requireObject2 = {
+            if (maxValue >= obj.amount) {
+                let reward_details = await rewardModel.findOne({ wallet_id: wallet_id })
+                const filteredRewards = reward_details.house_reward.filter(reward => reward.amount == obj.amount);
+                const filteredRewardsLength = filteredRewards.length + 1;
+                const result = filteredRewardsLength % 4 === 0 ? filteredRewardsLength / 4 : filteredRewardsLength / 4;
+                const resultString = result.toString();
+                const splitResult = resultString.split(".")
+
+                if (filteredRewards.length <= 2) {
+                    let requireObject = {
                         house_reward: houseValue,
                         ...obj,
                         user_id: userId,
                         invited_member_id: childWallet,
-                        status: "missed"
                     }
-                    await reward_details.updateOne({ house_reward: [...reward_details.house_reward, requireObject2] })
-                    if (reward_details.invite < 3) {
-                        await reward_details.updateOne({ $inc: { invite: 1 } })
-                    }
-                    await findUpline(buyed_plan1.refferal, obj, houseValue, userId, childWallet);
+                    await reward_details.updateOne({ $push: { house_reward: requireObject } });
+                    await reward_details.updateOne({ $inc: { invite: 1 } });
                 } else {
-                    const filteredRewards = reward_details.house_reward.filter(reward => reward.amount == obj.amount);
-                    const filteredRewardsLength = filteredRewards.length + 1;
-                    const result = filteredRewardsLength % 4 === 0 ? filteredRewardsLength / 4 : filteredRewardsLength / 4;
-                    const resultString = result.toString();
-                    const splitResult = resultString.split(".")
-                    console.log("filteredRewards", filteredRewards.length);
-                    console.log("buyed_plan1", wallet_id);
                     if (Number(resultString) > 0 && splitResult.length === 1) {
-                        let requireObject = {
+                        let requireObject2 = {
                             house_reward: houseValue,
                             ...obj,
                             user_id: userId,
                             invited_member_id: childWallet,
+                            status: "missed"
                         }
-                        await reward_details.updateOne({ house_reward: [...reward_details.house_reward, requireObject] })
-                        await reward_details.updateOne({ $inc: { invite: 1 } })
+                        await reward_details.updateOne({ $push: { house_reward: requireObject2 } });
+                        if (reward_details.invite < 3) {
+                            await reward_details.updateOne({ $inc: { invite: 1 } });
+                        }
+                        await findUpline(buyed_plan1.refferal, obj, houseValue, userId, childWallet);
                     } else {
-                        if (maxValue > obj.amount) {
-                            console.log("iam herehereherehere")
-                            console.log("iam herehereherehere")
-                            console.log("reward_details", reward_details.user_id)
-                            console.log("iam herehereherehere")
-                            console.log("iam herehereherehere")
+                        const filteredRewards = reward_details.house_reward.filter(reward => reward.amount == obj.amount);
+                        const filteredRewardsLength = filteredRewards.length + 1;
+                        const result = filteredRewardsLength % 4 === 0 ? filteredRewardsLength / 4 : filteredRewardsLength / 4;
+                        const resultString = result.toString();
+                        const splitResult = resultString.split(".")
+
+                        if (Number(resultString) > 0 && splitResult.length === 1) {
                             let requireObject = {
                                 house_reward: houseValue,
                                 ...obj,
                                 user_id: userId,
                                 invited_member_id: childWallet,
                             }
-                            await reward_details.updateOne({ house_reward: [...reward_details.house_reward, requireObject] })
-                            await reward_details.updateOne({ $inc: { invite: 1 } })
-                            return reward_details
+                            await reward_details.updateOne({ $push: { house_reward: requireObject } });
+                            await reward_details.updateOne({ $inc: { invite: 1 } });
                         } else {
-                            let requireObject2 = {
-                                house_reward: houseValue,
-                                ...obj,
-                                user_id: userId,
-                                invited_member_id: childWallet,
-                                status: "missed Reword"
+                            if (maxValue > obj.amount) {
+                                let requireObject = {
+                                    house_reward: houseValue,
+                                    ...obj,
+                                    user_id: userId,
+                                    invited_member_id: childWallet,
+                                }
+                                await reward_details.updateOne({ $push: { house_reward: requireObject } });
+                                await reward_details.updateOne({ $inc: { invite: 1 } });
+                                return reward_details;
+                            } else {
+                                let requireObject2 = {
+                                    house_reward: houseValue,
+                                    ...obj,
+                                    user_id: userId,
+                                    invited_member_id: childWallet,
+                                    status: "missed Reword"
+                                }
+                                if (reward_details.invite < 3) {
+                                    await reward_details.updateOne({ $inc: { invite: 1 } });
+                                }
+                                await reward_details.updateOne({ $push: { house_reward: requireObject2 } });
+                                await findUpline(buyed_plan1.refferal, obj, houseValue, userId, childWallet);
                             }
-                            if (reward_details.invite < 3) {
-                                await reward_details.updateOne({ $inc: { invite: 1 } })
-                            }
-                            await reward_details.updateOne({ house_reward: [...reward_details.house_reward, requireObject2] })
-                            await findUpline(buyed_plan1.refferal, obj, houseValue, userId, childWallet);
                         }
                     }
                 }
+            } else {
+                let reward_details = await rewardModel.findOne({ wallet_id: wallet_id })
+                let requireObject2 = {
+                    house_reward: houseValue,
+                    ...obj,
+                    user_id: userId,
+                    invited_member_id: childWallet,
+                    status: "missed Reword"
+                }
+                if (reward_details.invite < 3) {
+                    await reward_details.updateOne({ $inc: { invite: 1 } });
+                }
+                await reward_details.updateOne({ $push: { house_reward: requireObject2 } });
+                await findUpline(buyed_plan1.refferal, obj, houseValue, userId, childWallet);
             }
-        } else {
-            let reward_details = await rewardModel.findOne({ wallet_id: wallet_id })
-            let requireObject2 = {
-                house_reward: houseValue,
-                ...obj,
-                user_id: userId,
-                invited_member_id: childWallet,
-                status: "missed Reword"
-            }
-            if (reward_details.invite < 3) {
-                await reward_details.updateOne({ $inc: { invite: 1 } })
-            }
-            await reward_details.updateOne({ house_reward: [...reward_details.house_reward, requireObject2] })
-            await findUpline(buyed_plan1.refferal, obj, houseValue, userId, childWallet);
         }
-    } else {
-        return null;
+    } catch (error) {
+        console.error("Error in findUpline:", error);
     }
 };
 
-
 let house_rewards_service = async (childWallet, wallet, obj, userId) => {
     try {
+
         if (obj.amount == "20" || obj.amount == "40" || obj.amount == "1000" || obj.amount == "2000" || obj.amount == "4000") {
             let houseValue = Number(obj.amount) * 0.25
-            await findUpline(wallet, obj, houseValue, userId, childWallet).then((e) => {
-                console.log("http://localhost:3100/http://localhost:3100/", e);
-            })
+            await findUpline(wallet, obj, houseValue, userId, childWallet)
         } else if (obj.amount == "100" || obj.amount == "200") {
             let houseValue = Number(obj.amount) * 0.3
-            await findUpline(wallet, obj, houseValue, userId, childWallet).then((e) => {
-                console.log("http://localhost:3100/http://localhost:3100/", e);
-            })
+            await findUpline(wallet, obj, houseValue, userId, childWallet)
         } else {
             let houseValue = Number(obj.amount) * 0.24
-            await findUpline(wallet, obj, houseValue, userId, childWallet).then((e) => {
-                console.log("http://localhost:3100/http://localhost:3100/", e);
-            })
+            await findUpline(wallet, obj, houseValue, userId, childWallet)
         }
         return true
     } catch (error) {
-        console.log(error)
-        logger.error({
-            message: "house rewards service is down",
-            errors: error.message
-        })
-        throw error
+        console.log(error.message);
     }
 }
 
@@ -1021,10 +999,7 @@ async function level_reward_service(childWallet, wallet, obj, userId) {
             }
         }
     } catch (error) {
-        logger.error({
-            message: "level rewards service is down",
-            errors: error.message
-        })
+        console.log(error.message);
     }
 }
 
