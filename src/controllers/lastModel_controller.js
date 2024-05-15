@@ -210,6 +210,7 @@ const setdata = async (plandata, a, b, ref1, ref2, res, amount) => {
                 connectToField: "supporterId",
                 maxDepth: 4,
                 as: "referBY",
+                restrictSearchWithMatch: { amount: amount }
             },
         },
         {
@@ -1293,8 +1294,7 @@ const getalldata = async (req, res) => {
         if (leval > 0) {
             b += `.${leval}`;
         }
-        let plandata = planPrice == 20 ? "refs" : planPrice == 40 ? "ref40" : planPrice == 100 ? "ref100" : planPrice == 200 ? "ref200" : planPrice == 500 ? "ref500" : planPrice == 1000 ? "ref1000" : planPrice == 2000 ? "ref2000" : "ref4000"
-        setdata(plandata, a, b, ref, ref40, res, Number(planPrice))
+        setdata("refs", a, b, ref, ref, res, Number(planPrice))
     } catch (error) {
         logger.error({
             message: "get controller fail",
