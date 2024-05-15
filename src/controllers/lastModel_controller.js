@@ -32,7 +32,7 @@ const setdata = async (plandata, a, b, ref1, ref2, res, amount) => {
     let pipeline = [
         {
             $match: {
-                refId: b === "" ? a : a + b,
+                refId: a,
                 amount: amount
             },
         },
@@ -197,20 +197,20 @@ const setdata = async (plandata, a, b, ref1, ref2, res, amount) => {
     let memberDetails12 = await ref1.aggregate([
         {
             $match: {
-                refId: b === "" ? a : a + b,
-                amount: amount
+                refId: a,
+                amount: 20,
             },
         },
         {
             $graphLookup: {
-                from: plandata,
+                from: "refs",
                 startWith: "$refId",
                 connectFromField: "refId",
                 depthField: "depthleval",
                 connectToField: "supporterId",
                 maxDepth: 4,
                 as: "referBY",
-                restrictSearchWithMatch: { amount: amount }
+                restrictSearchWithMatch: { amount: amount },
             },
         },
         {
@@ -304,6 +304,7 @@ const setdata = async (plandata, a, b, ref1, ref2, res, amount) => {
     }
     let userdata = await ref1.findOne({ refId: b === "" ? a : a + b })
     const filteredData = memberDetails[0]?.referBY.filter(item => item.depthleval === 0);
+    console.log(memberDetails[0]?.referBY);
     const filteredDatalastwor = memberDetails[0]?.referBY.filter(item => item.depthleval === 4);
     res.send({ data: filteredData, data1: memberDetails12, filteredDatalastwor: filteredDatalastwor, userdata: userdata })
 }
