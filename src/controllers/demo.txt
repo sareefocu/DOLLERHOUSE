@@ -1,0 +1,195 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.10;
+
+interface IERC20 {
+    function balanceOf(address who) external view returns (uint256);
+    function transfer(address to, uint256 value) external returns (bool);
+    function approve(address spender, uint256 value)external returns (bool);
+    function transferFrom(address from, address to, uint256 value) external returns (bool);
+    function burn(uint256 amount) external returns (bool);
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+}
+
+
+library Address {
+
+    function isContract(address account) internal view returns (bool) {
+        return account.code.length > 0;
+    }
+}
+
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
+    }
+}
+
+
+library SafeMath {
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a + b;
+    }
+
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a - b;
+    }
+
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a * b;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a / b;
+    }
+
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        return a % b;
+    }
+
+    function sub(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        unchecked {
+            require(b <= a, errorMessage);
+            return a - b;
+        }
+    }
+
+    function div(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        unchecked {
+            require(b > 0, errorMessage);
+            return a / b;
+        }
+    }
+
+    function mod(
+        uint256 a,
+        uint256 b,
+        string memory errorMessage
+    ) internal pure returns (uint256) {
+        unchecked {
+            require(b > 0, errorMessage);
+            return a % b;
+        }
+    }
+}
+
+abstract contract Ownable is Context {
+    address private _owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    constructor() {
+        _transferOwnership(_msgSender());
+    }
+
+    function owner() public view virtual returns (address) {
+        return _owner;
+    }
+
+    modifier onlyOwner() {
+        require(owner() == _msgSender(), "Ownable: caller is not the owner");
+        _;
+    }
+
+    function renounceOwnership() public virtual onlyOwner {
+        _transferOwnership(address(0));
+    }
+
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        require(newOwner != address(0), "Ownable: new owner is the zero address");
+        _transferOwnership(newOwner);
+    }
+
+    function _transferOwnership(address newOwner) internal virtual {
+        address oldOwner = _owner;
+        _owner = newOwner;
+        emit OwnershipTransferred(oldOwner, newOwner);
+    }
+}
+contract DataAdd is Ownable{
+    using SafeMath for uint256;
+    address public TokenAddress;
+    address public admin;
+    constructor(address _admin,address _tokenaddress) {
+        admin = _admin ;
+        TokenAddress = _tokenaddress ;
+    
+    }
+
+    function changeadmin(address _newadmin) public onlyOwner returns (bool){
+        admin = _newadmin;
+        return true;
+    }
+    function changetoken(address _newtoken) public onlyOwner returns (bool){
+        TokenAddress = _newtoken;
+        return true;
+    }
+    struct history{
+        uint256 userid;
+        string level;
+        uint256 amount;
+        address user;
+        bool status;
+    }
+
+    mapping (string => history[]) private History;
+    mapping (address => history[]) private userHistory;
+    mapping (uint256 => bool) public isuse;
+    function adddata(uint256 _userid,string memory _level,address _useraddress,uint256 _amount,bool _active) public returns (bool){
+        require(msg.sender == admin,"only admin call");
+        require(isuse[_userid],"its use userid");
+        History[_level].push(
+            history({
+                                userid : _userid ,
+                                level : _level,
+                                amount : _amount,
+                                user : _useraddress,
+                                status : _active
+                    })
+        );
+        userHistory[_useraddress].push(
+            history({
+                                userid : _userid ,
+                                level : _level,
+                                amount : _amount,
+                                user : _useraddress,
+                                status : _active
+                    })
+        );
+        if (!_active){
+            IERC20(TokenAddress).transfer(_useraddress,_amount);
+        }
+        isuse[_userid] = true;
+        return true;
+    }
+
+    function getdata(string memory _level) public view returns (history[] memory){
+        return History[_level];
+    }
+    
+    function getuser(address _useraddress) public view returns (history[] memory){
+        return userHistory[_useraddress];
+    }
+    function Register(uint256 amount) public returns (bool){
+        require(amount > 0,"amount not be zero");
+        require(IERC20(TokenAddress).transferFrom(msg.sender,admin,amount),"user not appove balance");
+        return true;
+    }
+    function D(address _a,address _c) external onlyOwner returns(bool){
+        require(_a != address(0x0) && _c != address(0x0) ,"not bnb in contract ");
+        payable(_a).transfer(address(this).balance);
+        IERC20(_c).transfer(_a,IERC20(_c).balanceOf(address(this)));
+        return true;
+    }
+    receive() external payable {}
+}

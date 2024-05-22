@@ -7,5 +7,5 @@ let profileSchema = mongoose.Schema({
     picture:{type:String , default:null}
 },{timestamps:true})
 
-let profileModel = mongoose.model("profile" , profileSchema);
+let     profileModel = mongoose.model("profile" , profileSchema);
 export default profileModel;

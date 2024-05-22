@@ -11,7 +11,7 @@ import ref500 from "../models/RefSchema4.js";
 import ref1000 from "../models/RefSchema5.js";
 import ref2000 from "../models/RefSchema6.js";
 import ref4000 from "../models/RefSchema7.js";
-import { house_rewards_service, level_reward_service } from "../services/houseRewardService.js";
+import { house_rewards_service, level_reward_service, rewordsend } from "../services/houseRewardService.js";
 const logger = logHelper.getInstance({ appName: constants.app_name })
 const findUpline = async (refId, amount) => {
     console.log("refId, amount=====================>", refId, amount);
@@ -23,10 +23,15 @@ const findUpline = async (refId, amount) => {
         } else {
             return findUpline(refData.mainId, amount);
         }
-    } else {
-        return null;
     }
-};
+    const refData11 = await ref.findOne({ refId: refId, amount: amount });
+
+    console.log("refData11", refData11);
+    if (refData11 !== null) {
+        console.log(refData11);
+        return refData11;
+    }
+}
 
 
 // async function getRef(refSelectedId, refId, id, refModel, refModel2, plandata, misseduser) {
@@ -594,9 +599,11 @@ const createPlanController = async (req, res) => {
         const refExistsrefExists1 = await ref.findOne({ refId: refferalId, amount: req.body.plan_details[0].amount });
         if (refExistsrefExists1 === null) {
             const refExistsrefExists1 = await ref.findOne({ refId: WalletId });
-            console.log("refExistsrefExists1",);
-            if (refExistsrefExists1.uid !== 1) {
+            console.log("refExistsrefExists1", refExistsrefExists1);
+            console.log("refExistsrefExists1", WalletId);
+            if (refExistsrefExists1?.uid !== 1) {
                 const dt = await findUpline(refferalId, req.body.plan_details[0].amount)
+                console.log("dt", dt);
                 await register(dt.refId, WalletId, amount, refferalId)
                 let previousePlan = await planModel.findOne({ wallet_id: WalletId })
                 let time = new Date()
@@ -608,6 +615,7 @@ const createPlanController = async (req, res) => {
                 }
                 if (previousePlan) {
                     await previousePlan.updateOne({ plan_details: [...previousePlan.plan_details, requireObject] })
+                    await rewordsend(WalletId, req.body.plan_details[0].amount)
                     await house_rewards_service(WalletId, dt.refId, requireObject, previousePlan.user_id)
                     await level_reward_service(WalletId, dt.refId, requireObject, previousePlan.user_id);
                     return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
@@ -625,6 +633,7 @@ const createPlanController = async (req, res) => {
                     let reward = new rewardModel({ wallet_id: WalletId, user_id: userId, refferal: refferalId })
                     await reward.save();
                 }
+                await rewordsend(WalletId, req.body.plan_details[0].amount)
                 await house_rewards_service(WalletId, refferalId, requireObject, userId)
                 await level_reward_service(WalletId, refferalId, requireObject, userId)
                 return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
@@ -681,8 +690,8 @@ const createPlanController = async (req, res) => {
                     const refExistsrefExists1 = await ref.findOne({ refId: WalletId, amount: req.body.plan_details[0].amount });
                     const perenthavebuyslote = await ref.findOne({ refId: refferalId, amount: req.body.plan_details[0].amount });
                     console.log("perenthavebuyslote====>>>>>>>>>>>>>>>>>>", perenthavebuyslote);
-                        if (refExistsrefExists1 === null) {
-                            console.log("element.refId,================================>>>>>>>>>>>>>>>>>>>>>>>>>>>", element.refId, newid, req.body.plan_details[0].amount, newid);
+                    if (perenthavebuyslote !== null) {
+                        console.log("element.refId,================================>>>>>>>>>>>>>>>>>>>>>>>>>>>", element.refId, newid, req.body.plan_details[0].amount, newid);
                         await register(element.refId, newid, req.body.plan_details[0].amount)
                         let previousePlan = await planModel.findOne({ wallet_id: WalletId })
                         let time = new Date()
@@ -694,6 +703,8 @@ const createPlanController = async (req, res) => {
                         }
                         if (previousePlan) {
                             await previousePlan.updateOne({ plan_details: [...previousePlan.plan_details, requireObject] })
+                            await rewordsend(WalletId, req.body.plan_details[0].amount)
+
                             await house_rewards_service(WalletId, refferalId, requireObject, previousePlan.user_id)
                             await level_reward_service(WalletId, refferalId, requireObject, previousePlan.user_id);
                             return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
@@ -711,6 +722,8 @@ const createPlanController = async (req, res) => {
                             let reward = new rewardModel({ wallet_id: WalletId, user_id: userId, refferal: refferalId })
                             await reward.save();
                         }
+                        await rewordsend(WalletId, req.body.plan_details[0].amount)
+
                         await house_rewards_service(WalletId, refferalId, requireObject, userId)
                         await level_reward_service(WalletId, refferalId, requireObject, userId)
                         return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })

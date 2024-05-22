@@ -3790,34 +3790,42 @@ div.rc_popup__block__content a {
   display: flex;
   justify-content: center;
 }
-.mx-2{
-    margin: 8px !important;
-}.slider-container {
-    position: relative;
-    overflow: hidden;
+.mx-2 {
+  margin: 8px !important;
+}
+.slider-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.slider {
+  display: flex;
+  transition: transform 0.5s ease;
+}
+
+.product {
+  flex: 0 0 100%;
+}
+
+button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+.prev {
+  left: 10px;
+}
+
+.next {
+  right: 10px;
+}
+.de1211 {
+  width: 50% !important;
+}
+@media only screen and (max-width: 768px) {
+  .de1211 {
+    width: 25% !important;
   }
-  
-  .slider {
-    display: flex;
-    transition: transform 0.5s ease;
-  }
-  
-  .product {
-    flex: 0 0 100%;
-  }
-  
-  button {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 1;
-  }
-  
-  .prev {
-    left: 10px;
-  }
-  
-  .next {
-    right: 10px;
-  }
-  
+}
