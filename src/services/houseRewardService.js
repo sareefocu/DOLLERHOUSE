@@ -157,8 +157,9 @@ const rewordsend = async (wallet, amount) => {
                 console.log("finalamountfinalamountfinalamountfinalamount", finalamount);
                 let tokenAmount = Number(finalamount * 10 ** 18)
                 ids.push(result[0]["supporterId"])
-                await sendTOKEN(result[0]["supporterId"], tokenAmount.toString(), i);
+                    await sendTOKEN(result[0]["supporterId"].split(".")[0], tokenAmount.toString(), i);
                 console.log("idsids", ids);
+
             }
 
         }
