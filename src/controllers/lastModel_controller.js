@@ -32,7 +32,7 @@ const setdata = async (plandata, a, b, ref1, ref2, res, amount) => {
     let pipeline = [
         {
             $match: {
-                refId: a,
+                refId: b === "" ? a : a + b,
                 amount: amount
             },
         },
@@ -197,8 +197,8 @@ const setdata = async (plandata, a, b, ref1, ref2, res, amount) => {
     let memberDetails12 = await ref1.aggregate([
         {
             $match: {
-                refId: a,
-                amount: 20,
+                refId: b === "" ? a : a + b,
+                amount: amount,
             },
         },
         {
@@ -257,48 +257,48 @@ const setdata = async (plandata, a, b, ref1, ref2, res, amount) => {
         },
     ]
     )
-    for (let index = 0; index < memberDetails12.length; index++) {
-        const el = memberDetails12[index]
-        const refExists = await ref1.findOne({ refId: a });
-        const refExists1 = await ref2.findOne({ refId: a });
-        if (b === "") {
-            el.referBY?.sort((a, b) => {
-                return new Date(a.createdAt) - new Date(b.createdAt);
-            }).forEach(async (item, index) => {
-                const refIdExists = refExists.missedusers.some(missedUser => missedUser.refId === item.refId);
-                if (!refIdExists) {
-                    refExists.missedusers.push({
-                        uid: item.uid,
-                        refId: item.refId,
-                        mainId: item.mainId,
-                        supporterId: item.supporterId,
-                        depthleval: item.depthleval,
-                        status: item.depthleval !== 0 ? index === 60 ? "stored" : index === 61 ? "stored" : "done" : "send to upline",
-                        createdAt: item.createdAt
-                    });
-                }
-            })
-        } else {
-            el.referBY?.sort((a, b) => {
-                return new Date(a.createdAt) - new Date(b.createdAt);
-            }).forEach(async (item, index) => {
-                console.log("refExists1", refExists1);
-                const refIdExists = refExists.missedusers.some(missedUser => missedUser.refId === item.refId);
-                if (!refIdExists) {
-                    refExists.missedusers.push({
-                        uid: item.uid,
-                        refId: item.refId,
-                        mainId: item.mainId,
-                        supporterId: item.supporterId,
-                        depthleval: item.depthleval,
-                        status: refExists1 !== null ? item.depthleval !== 0 ? index === 60 ? "stored" : index === 61 ? "stored" : "done" : "send to upline" : "missed",
-                        createdAt: item.createdAt
-                    });
-                }
-            })
-        }
-        await refExists?.save(); // Save changes to the document
-    }
+    // for (let index = 0; index < memberDetails12.length; index++) {
+    //     const el = memberDetails12[index]
+    //     const refExists = await ref1.findOne({ refId: a });
+    //     const refExists1 = await ref2.findOne({ refId: a });
+    //     if (b === "") {
+    //         el.referBY?.sort((a, b) => {
+    //             return new Date(a.createdAt) - new Date(b.createdAt);
+    //         }).forEach(async (item, index) => {
+    //             const refIdExists = refExists.missedusers.some(missedUser => missedUser.refId === item.refId);
+    //             if (!refIdExists) {
+    //                 refExists.missedusers.push({
+    //                     uid: item.uid,
+    //                     refId: item.refId,
+    //                     mainId: item.mainId,
+    //                     supporterId: item.supporterId,
+    //                     depthleval: item.depthleval,
+    //                     status: item.depthleval !== 0 ? index === 60 ? "stored" : index === 61 ? "stored" : "done" : "send to upline",
+    //                     createdAt: item.createdAt
+    //                 });
+    //             }
+    //         })
+    //     } else {
+    //         el.referBY?.sort((a, b) => {
+    //             return new Date(a.createdAt) - new Date(b.createdAt);
+    //         }).forEach(async (item, index) => {
+    //             console.log("refExists1", refExists1);
+    //             const refIdExists = refExists.missedusers.some(missedUser => missedUser.refId === item.refId);
+    //             if (!refIdExists) {
+    //                 refExists.missedusers.push({
+    //                     uid: item.uid,
+    //                     refId: item.refId,
+    //                     mainId: item.mainId,
+    //                     supporterId: item.supporterId,
+    //                     depthleval: item.depthleval,
+    //                     status: refExists1 !== null ? item.depthleval !== 0 ? index === 60 ? "stored" : index === 61 ? "stored" : "done" : "send to upline" : "missed",
+    //                     createdAt: item.createdAt
+    //                 });
+    //             }
+    //         })
+    //     }
+    //     await refExists?.save(); // Save changes to the document
+    // }
     if (!memberDetails) {
         return res.send({ message: "team not found" })
     }
@@ -460,8 +460,8 @@ const setdata11 = async (req, res) => {
         console.log("a + b", a + b);
         const promises = [
             setdata1122233("refs", a, b, ref, ref40),
-            setdata1122233("ref40", a, b, ref40, ref100),
-            setdata1122233("ref100", a, b, ref100, ref200),
+            setdata1122233("ref40", a, b, ref, ref100),
+            setdata1122233("ref100", a, b, ref, ref200),
             setdata1122233("ref200", a, b, ref200, ref500),
             setdata1122233("ref500", a, b, ref500, ref1000),
             setdata1122233("ref1000", a, b, ref1000, ref2000),
