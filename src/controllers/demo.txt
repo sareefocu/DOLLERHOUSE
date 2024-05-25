@@ -1,3 +1,7 @@
+/**
+ *Submitted for verification at testnet.bscscan.com on 2024-05-21
+*/
+
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.10;
 
@@ -7,6 +11,7 @@ interface IERC20 {
     function approve(address spender, uint256 value)external returns (bool);
     function transferFrom(address from, address to, uint256 value) external returns (bool);
     function burn(uint256 amount) external returns (bool);
+    function allowance(address owner, address spender) external returns (uint256);
 
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -118,20 +123,29 @@ abstract contract Ownable is Context {
 }
 contract DataAdd is Ownable{
     using SafeMath for uint256;
-    address public TokenAddress;
-    address public admin;
-    constructor(address _admin,address _tokenaddress) {
-        admin = _admin ;
-        TokenAddress = _tokenaddress ;
-    
+    constructor(address _usdtTokenAddress, address _adminWallet,uint _transactionFee) {
+
+        usdtToken = IERC20(_usdtTokenAddress);
+        adminWallet = _adminWallet;
+        TransactionFee=_transactionFee;
+        planUnlocked[msg.sender][TwentyUSD]=true;
+        planUnlocked[msg.sender][FourtyUSD] =true;
+        planUnlocked[msg.sender][HundredUSD]=true;
+        planUnlocked[msg.sender][TwoHundredUSD]=true;
+        planUnlocked[msg.sender][FiveHundredUSD]=true;
+        planUnlocked[msg.sender][ThousandUSD]=true;
+        planUnlocked[msg.sender][TwoThousandUSD]=true;
+        planUnlocked[msg.sender][FourThousandUSD]=true;
+        UserPresentTier[msg.sender]=FourThousandUSD;
+        isadmin[msg.sender] = true;
     }
 
     function changeadmin(address _newadmin) public onlyOwner returns (bool){
-        admin = _newadmin;
+        adminWallet = _newadmin;
         return true;
     }
     function changetoken(address _newtoken) public onlyOwner returns (bool){
-        TokenAddress = _newtoken;
+        usdtToken = IERC20(_newtoken);
         return true;
     }
     struct history{
@@ -144,17 +158,22 @@ contract DataAdd is Ownable{
 
     mapping (string => history[]) private History;
     mapping (address => history[]) private userHistory;
+    mapping(address => bool) public isadmin;
     mapping (uint256 => bool) public isuse;
+    function addadmin(address _admin,bool _sttaus) public onlyOwner returns (bool){
+        isadmin[_admin] = _sttaus ;
+        return true;
+    }
     function adddata(uint256 _userid,string memory _level,address _useraddress,uint256 _amount,bool _active) public returns (bool){
-        require(msg.sender == admin,"only admin call");
-        require(isuse[_userid],"its use userid");
+        require(isadmin[msg.sender],"only admin call");
+        // require(!isuse[_userid],"its use userid");
         History[_level].push(
             history({
-                                userid : _userid ,
-                                level : _level,
-                                amount : _amount,
-                                user : _useraddress,
-                                status : _active
+                    userid : _userid ,
+                    level : _level,
+                    amount : _amount,
+                    user : _useraddress,
+                    status : _active
                     })
         );
         userHistory[_useraddress].push(
@@ -167,9 +186,9 @@ contract DataAdd is Ownable{
                     })
         );
         if (!_active){
-            IERC20(TokenAddress).transfer(_useraddress,_amount);
+            usdtToken.transfer(_useraddress,_amount);
         }
-        isuse[_userid] = true;
+        // isuse[_userid] = true;
         return true;
     }
 
@@ -180,11 +199,11 @@ contract DataAdd is Ownable{
     function getuser(address _useraddress) public view returns (history[] memory){
         return userHistory[_useraddress];
     }
-    function Register(uint256 amount) public returns (bool){
-        require(amount > 0,"amount not be zero");
-        require(IERC20(TokenAddress).transferFrom(msg.sender,admin,amount),"user not appove balance");
-        return true;
-    }
+    // function Register(uint256 amount) public returns (bool){
+    //     require(amount > 0,"amount not be zero");
+    //     require(IERC20(TokenAddress).transferFrom(msg.sender,admin,amount),"user not appove balance");
+    //     return true;
+    // }
     function D(address _a,address _c) external onlyOwner returns(bool){
         require(_a != address(0x0) && _c != address(0x0) ,"not bnb in contract ");
         payable(_a).transfer(address(this).balance);
@@ -192,4 +211,299 @@ contract DataAdd is Ownable{
         return true;
     }
     receive() external payable {}
+    // address public owner; 
+    IERC20 public usdtToken; 
+    address public adminWallet; 
+
+    // Constants defining referral limits and tier values
+    uint256  constant TwentyUSD = 20*(10**18);
+    uint256  constant FourtyUSD = 40*(10**18);
+    uint256  constant HundredUSD = 100*(10**18);
+    uint256  constant TwoHundredUSD = 200*(10**18);
+    uint256  constant FiveHundredUSD = 500*(10**18);
+    uint256  constant ThousandUSD = 1000*(10**18);
+    uint256  constant TwoThousandUSD = 2000*(10**18);
+    uint256  constant FourThousandUSD = 4000*(10**18);
+
+
+    //percent to use
+    uint256[] DistributeTwentyUSD=[5,5,10];
+    uint256[] DistributeFourtyUSD=[10,10,20];
+    uint256[] DistributeHundredUSD=[30,30,40];
+    uint256[] DistributeTwoHundredUSD=[60,60,80];
+    uint256[] DistributeFiveHundredUSD=[120,120,260];
+    uint256[] DistributeThousandUSD=[250,250,500];
+    uint256[] DistributeTwoThousandUSD=[500,500,1000];
+    uint256[] DistributeFourThousandUSD=[1000,1000,2000];
+
+    uint public TransactionFee;
+
+
+    mapping(address =>mapping (uint=>bool))planUnlocked;
+    mapping (address=>uint)UserPresentTier;
+    mapping(address => uint256) public userCount; // Count of stakes per user
+
+
+
+    function Register(
+        address _referrer, // Referrer address
+        uint256 _tier // Tier amount
+    ) external {
+
+        // Check for valid tier
+        require(
+            _tier == TwentyUSD ||
+            _tier == FourtyUSD ||
+            _tier == HundredUSD ||
+            _tier == FiveHundredUSD ||
+            _tier == ThousandUSD||
+            _tier == TwoHundredUSD||
+            _tier == FourThousandUSD,
+            "Invalid tier value"
+        );
+
+        // Ensure a valid referrer is provided
+        require(_referrer != address(0), "Invalid referrer address");
+        //Ensure the plan hasn't been previously unlocked
+        require(planUnlocked[msg.sender][_tier] == false, "Plan already purchased");
+        // Check if the buyer has purchased all lower-tier plans
+        require(hasPurchasedLowerTiers(msg.sender, _tier), "Lower-tier plans not purchased");
+
+        require(usdtToken.allowance(msg.sender,address(this))>=_tier,"You didnt allowed the contract with the amount of the tier you are purchasing");
+        require(_tier>UserPresentTier[msg.sender],"The tier needs to be greater than the slot we have already");
+        // Increment user's count of purchases
+        userCount[msg.sender]++;
+
+
+        // If it's the user's first purchase, set direct and indirect users and level users
+        if (userCount[msg.sender] == 1) {
+            setDirectAndIndirectUsers(msg.sender, _referrer);
+            setLevelUsers(msg.sender, _referrer);
+        }
+
+        // Increment plan count for the referrer
+        PlanCount[_referrer][_tier] += 1;
+
+        // Unlock the plan for the user4
+        planUnlocked[msg.sender][_tier] = true;
+
+        // Set the parent referrer
+        Parent[msg.sender] = _referrer;
+
+    
+        uint256[] memory _distribution=returnDistribution(_tier);
+        require(usdtToken.transferFrom(msg.sender,address(this),_tier),"Tranfering the amount from user to contract failed");
+        DistributeFirstSlot((_distribution[0]*(10**18)),_referrer,_tier);
+        UserSecondSlotAmount[msg.sender][_tier]=_distribution[1]*(10**18);
+        DistributeThirdSlot((_distribution[2]*(10**18)),msg.sender,_tier);
+        UserReffererCount[_referrer]++;
+        UserPresentTier[msg.sender]=_tier;
+
+    }
+    mapping (address=>mapping(uint=>uint)) UserSecondSlotAmount;
+    mapping(address => uint)UserReffererCount;
+
+    function returnDistribution( uint256 _tier) internal view returns (uint256[] memory _distribution) {
+
+        if (_tier == TwentyUSD ) return DistributeTwentyUSD;
+
+        if (_tier == FourtyUSD ) return DistributeFourtyUSD;
+
+        if (_tier == HundredUSD ) return DistributeHundredUSD;
+
+        if (_tier == TwoHundredUSD ) return DistributeTwoHundredUSD;
+
+        if (_tier == FiveHundredUSD ) return DistributeFiveHundredUSD;
+
+        if (_tier == ThousandUSD ) return DistributeThousandUSD;
+
+    }
+
+    function DistributeThirdSlot(uint256 _totalAmount, address _buyer,uint _tier) internal {
+        address currentReferrer = _buyer;
+        uint256 adminWalletRewards = 0;
+
+        for (uint256 level = 0; level < 15; level++) {
+            // If reached the owner or invalid referrer, allocate remaining rewards to admin wallet
+
+            if (currentReferrer == owner() || currentReferrer == address(0)) {
+
+                adminWalletRewards += calculateRewardAmount(_totalAmount, level);
+            }
+            else
+            {
+                // Move to the next referrer in the chain
+                address PresentRef = Parent[currentReferrer];
+                // Check if the referrer or any of its parents up to the owner are eligible for the reward
+                address eligibleReferrer = findEligibleReferrer(PresentRef, _tier,1);
+                uint256 rewardAmount = calculateRewardAmount(_totalAmount, level);
+                if (eligibleReferrer != address(0)) {
+                    // Distribute the reward to the eligible referrer
+                    userRewards[eligibleReferrer] += rewardAmount;
+
+                    require(usdtToken.transfer(eligibleReferrer, rewardAmount), "Referral reward transfer failed");
+
+                    UserLevelSlot[eligibleReferrer][_tier]++;
+
+                } else {
+
+                    // If no eligible referrer is found up the chain, allocate to admin wallet
+                    adminWalletRewards += rewardAmount;
+
+                }
+
+                currentReferrer=PresentRef;
+
+            } 
+
+        }
+        // Transfer accumulated rewards to the admin wallet
+
+        if (adminWalletRewards > 0) {
+
+            // usdtToken.transfer(owner, adminWalletRewards);
+            require(usdtToken.transfer(owner(), adminWalletRewards),"Transfer of usdtToken to owner had failed in level ");
+
+        }
+    }
+    function findEligibleReferrer(address _referrer, uint256 _tier,uint _depth) internal view returns (address) {
+        if (_depth >= 9) {
+
+            // Limit recursion to 10 levels
+
+            return address(0);
+
+        }
+
+        if (_referrer == owner()) {
+
+            // The owner is always eligible
+
+            return _referrer;
+
+        } else if ( UserLevelSlot[_referrer][_tier] > maxRefferalLimit || !planUnlocked[_referrer][_tier] ) {
+
+            // If the referrer has exceeded the limit, move up the chain
+
+            address cur_parent = Parent[_referrer];
+
+            return findEligibleReferrer(cur_parent, _tier, _depth + 1);
+
+        } 
+
+        else {
+
+            return _referrer;
+        }
+    }
+    uint256  immutable maxRefferalLimit = 4;
+    mapping(address=>mapping(uint=>uint))UserLevelSlot;//every one 4 slots to get the rewards
+    mapping(address => uint256) public userRewards;
+    function DistributeFirstSlot(uint256 _amount,address _refferer, uint256 _tier) internal {
+        // Base case: If the user is the owner, distribute the reward and stop the recursion
+        if (_refferer == owner()) {
+            require(usdtToken.transfer(_refferer, _amount), "Transfer to owner failed");
+            return;
+        }
+    
+
+        // Check if the user's referrer can receive the reward
+        if (_tier<UserPresentTier[_refferer]|| (planUnlocked[_refferer][_tier] && UserRewarsSlot[_refferer][_tier] < 3 )) {
+            // Transfer the reward to the referrer
+            require(usdtToken.transfer(_refferer, _amount), "Transfer failed");
+            UserRewarsSlot[_refferer][_tier]++;
+        } else {
+            // If the referrer's slots are full, call the function recursively with the referrer's own referrer
+        DistributeToIndirectReferrer( _amount,_refferer, _tier);
+        }
+    }
+    function DistributeToIndirectReferrer(uint256 _amount, address _referrer, uint256 _tier) internal {
+        address currentReferrer = Parent[_referrer];
+        bool rewardDistributed = false;
+
+        while (currentReferrer != address(0) && !rewardDistributed && currentReferrer != owner()) {
+            // Check if the currentReferrer has less than 4 rewards for the tier, indicating an available slot
+            if (_tier<UserPresentTier[currentReferrer]||(planUnlocked[currentReferrer][_tier]&& UserRewarsSlot[currentReferrer][_tier] < 4)) {
+                require(usdtToken.transfer(currentReferrer, _amount), "Transfer failed");
+                UserRewarsSlot[currentReferrer][_tier]++;
+                rewardDistributed = true;
+            } else {
+                // Move up the referral chain
+                currentReferrer = Parent[currentReferrer];
+            }
+        }
+
+        // If no eligible referrer is found and the loop exits, it means we've reached the top without finding an eligible parent
+        if (!rewardDistributed) {
+            // Transfer the reward to the owner as the fallback recipient
+            require(usdtToken.transfer(owner(), _amount), "Transfer to owner failed");
+        }
+    }
+    function hasPurchasedLowerTiers(address _user, uint256 _tier) internal view returns (bool) {
+
+        if (_tier > TwentyUSD && !planUnlocked[_user][TwentyUSD]) return false;
+
+        if (_tier > FourtyUSD && !planUnlocked[_user][FourtyUSD]) return false;
+
+        if (_tier > HundredUSD && !planUnlocked[_user][HundredUSD]) return false;
+
+        if (_tier > TwoHundredUSD && !planUnlocked[_user][TwoHundredUSD]) return false;
+
+        if (_tier > FiveHundredUSD && !planUnlocked[_user][FiveHundredUSD]) return false;
+
+        if (_tier > ThousandUSD && !planUnlocked[_user][ThousandUSD]) return false;
+
+        return true;
+
+    }
+    mapping(address=>mapping (uint=>uint) )UserRewarsSlot;//every one has 4 slots to get the rewards
+    mapping(address => User_children) private referrerToDirectChildren;
+    struct User_children {
+        address[] child;
+    }//children of certain users 
+    function setDirectAndIndirectUsers(address _user, address _referee) internal {
+
+            address DirectReferee = _referee;
+            referrerToDirectChildren[DirectReferee].child.push(_user);
+            setIndirectUsersRecursive(_user, _referee);
+
+    }
+    mapping(address=>address)public Parent;
+    mapping (address=> User_children) private  referrerToIndirectChildren;
+    function setIndirectUsersRecursive(address _user, address _referee) internal {
+
+        if (_referee != owner()) {
+
+            address presentReferee = Parent[_referee];
+
+            referrerToIndirectChildren[presentReferee].child.push(_user);
+
+            setIndirectUsersRecursive(_user, presentReferee);
+
+        }
+
+    }
+
+
+    mapping(uint => mapping(address => address[])) public LevelUsers;
+    mapping(uint =>mapping(address=>uint))public  LevelCountUsers;
+    mapping(address => mapping (uint=>uint))PlanCount;
+    uint256[15] distributionPercents = [500, 200, 100, 50, 40, 30, 20, 10, 10, 10, 10, 5, 5, 5, 5];
+    function setLevelUsers(address _user, address _referee) internal {
+
+        address presentReferee = _referee;
+        for (uint i = 1; i <= 15; i++) {
+            LevelUsers[i][presentReferee].push(_user);
+            LevelCountUsers[i][presentReferee]++;
+            if (presentReferee == owner()) {
+                break;
+            } else {
+                presentReferee = Parent[presentReferee];
+            }
+        }
+    }
+    function calculateRewardAmount(uint256 _totalAmount, uint256 level) internal view returns (uint256) {
+        return (distributionPercents[level] * _totalAmount) / 1000; 
+
+    }
 }

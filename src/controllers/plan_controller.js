@@ -617,7 +617,7 @@ const createPlanController = async (req, res) => {
                     await previousePlan.updateOne({ plan_details: [...previousePlan.plan_details, requireObject] })
                     await rewordsend(WalletId, req.body.plan_details[0].amount)
                     await house_rewards_service(WalletId, dt.refId, requireObject, previousePlan.user_id)
-                    await level_reward_service(WalletId, dt.refId, requireObject, previousePlan.user_id);
+                    await level_reward_service(WalletId, refferalId , requireObject, previousePlan.user_id);
                     return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
                 } else {
                     if (!user) {
@@ -703,8 +703,8 @@ const createPlanController = async (req, res) => {
                         }
                         if (previousePlan) {
                             await previousePlan.updateOne({ plan_details: [...previousePlan.plan_details, requireObject] })
-                            await rewordsend(WalletId, req.body.plan_details[0].amount)
 
+                            await rewordsend(WalletId, req.body.plan_details[0].amount)
                             await house_rewards_service(WalletId, refferalId, requireObject, previousePlan.user_id)
                             await level_reward_service(WalletId, refferalId, requireObject, previousePlan.user_id);
                             return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
@@ -722,8 +722,8 @@ const createPlanController = async (req, res) => {
                             let reward = new rewardModel({ wallet_id: WalletId, user_id: userId, refferal: refferalId })
                             await reward.save();
                         }
-                        await rewordsend(WalletId, req.body.plan_details[0].amount)
 
+                        await rewordsend(WalletId, req.body.plan_details[0].amount)
                         await house_rewards_service(WalletId, refferalId, requireObject, userId)
                         await level_reward_service(WalletId, refferalId, requireObject, userId)
                         return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
