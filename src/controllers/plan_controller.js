@@ -580,7 +580,13 @@ const dat = async (UIDS, referid, amount) => {
 }
 const createPlanController = async (req, res) => {
     let WalletId = req.body.wallet_id
-    let refferalId = req.body.refferalId
+    var user = await userModel.findOne({ wallet_id: WalletId });
+    let refferalId = await userModel.findOne({
+        $or: [
+          { wallet_id: req.body.refferalId },
+          { user_id: req.body.refferalId }
+        ]
+      });
     let amount = Number(req.body.amount === null ? 20 : req.body.amount)
     try {
         var user = await userModel.findOne({ wallet_id: WalletId });
