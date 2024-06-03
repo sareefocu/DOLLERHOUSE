@@ -3,4 +3,4 @@ let constants = {
     app_name:"newWeb3project",
 }
 
-export default constants ;
+export default constants;

@@ -244,27 +244,28 @@ async function level_reward_service(childWallet, wallet, obj, userId) {
     try {
         const wallet_id = childWallet
         const upline = await getUpline(wallet_id);
+        console.log("wallet_idwallet_idwallet_id", wallet_id);
         let rewordpre = [0.5, 0.2, 0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.01, 0.01, 0.01, 0.005, 0.005, 0.005, 0.005]
         if (obj.amount == "20" || obj.amount == "40" || obj.amount == "1000" || obj.amount == "2000" || obj.amount == "4000") {
             upline.map(async (el, index) => {
                 console.log("elelelel", el);
                 let rewardValue = Number(obj.amount) * 0.5
                 let reward_details1 = await rewardModel.findOne({ wallet_id: el })
-                await reward_details1.updateOne({ level_reward: [...reward_details1.level_reward, { level: index + 1, reward: rewardValue * rewordpre[index], ...obj, user_id: userId, invited_member_id: childWallet, }] })
+                await reward_details1.updateOne({ level_reward: [...reward_details1.level_reward, { level: index + 1, reward: rewardValue * rewordpre[index], ...obj, user_id: userId, invited_member_id: childWallet }] })
             })
         } else if (obj.amount == "100" || obj.amount == "200") {
             upline.map(async (el, index) => {
                 console.log("elelelel", el);
                 let rewardValue = Number(obj.amount) * 0.4
                 let reward_details1 = await rewardModel.findOne({ wallet_id: el })
-                await reward_details1.updateOne({ level_reward: [...reward_details1.level_reward, { level: index + 1, reward: rewardValue * rewordpre[index], ...obj, user_id: userId, invited_member_id: childWallet, }] })
+                await reward_details1.updateOne({ level_reward: [...reward_details1.level_reward, { level: index + 1, reward: rewardValue * rewordpre[index], ...obj, user_id: userId, invited_member_id: childWallet }] })
             })
         } else {
             upline.map(async (el, index) => {
                 console.log("elelelel", el);
                 let rewardValue = Number(obj.amount) * 0.52
                 let reward_details1 = await rewardModel.findOne({ wallet_id: el })
-                await reward_details1.updateOne({ level_reward: [...reward_details1.level_reward, { level: index + 1, reward: rewardValue * rewordpre[index], ...obj, user_id: userId, invited_member_id: childWallet, }] })
+                await reward_details1.updateOne({ level_reward: [...reward_details1.level_reward, { level: index + 1, reward: rewardValue * rewordpre[index], ...obj, user_id: userId, invited_member_id: childWallet }] })
             })
         }
     } catch (error) {

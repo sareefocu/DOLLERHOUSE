@@ -33,6 +33,7 @@ const getUserController = async (req, res) => {
     let profilesModel1 = await profilesModel.findOne({ wallet_id: WalletId })
     if (alreadyUser) {
       let parent = await rewardModel.findOne({ user_id: alreadyUser.user_id })
+      let parent1 = await rewardModel.findOne({ wallet_id: parent.refferal })
       let reponse = {
         _id: alreadyUser._id,
         wallet_id: alreadyUser.wallet_id,
@@ -42,6 +43,7 @@ const getUserController = async (req, res) => {
         profile: profilesModel1,
         parent_details: {
           wallet_id: parent.refferal,
+          user_id: parent1.user_id,
         }
       }
       res.send({ message: "user is fetch succesfully", data: reponse })

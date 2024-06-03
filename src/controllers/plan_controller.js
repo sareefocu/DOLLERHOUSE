@@ -581,13 +581,22 @@ const dat = async (UIDS, referid, amount) => {
 const createPlanController = async (req, res) => {
     let WalletId = req.body.wallet_id
     var user = await userModel.findOne({ wallet_id: WalletId });
-    let refferalId = await userModel.findOne({
+    let reff = await userModel.findOne({
         $or: [
-          { wallet_id: req.body.refferalId },
-          { user_id: req.body.refferalId }
+            { wallet_id: req.body.refferalId },
+            { user_id: req.body.refferalId }
         ]
-      });
+    });
+    let refferalId = reff.wallet_id
+    console.log("refferalIdrefferalIdrefferalIdrefferalIdrefferalIdrefferalIdrefferalIdrefferalIdrefferalId", reff.wallet_id);
+    console.log("WalletId", WalletId);
     let amount = Number(req.body.amount === null ? 20 : req.body.amount)
+    if (refferalId === null) {
+        return res.status(404).json({
+            status: "NotFound",
+            message: "Invalid wallet id or user id",
+        });
+    }
     try {
         var user = await userModel.findOne({ wallet_id: WalletId });
         let userId
@@ -623,7 +632,7 @@ const createPlanController = async (req, res) => {
                     await previousePlan.updateOne({ plan_details: [...previousePlan.plan_details, requireObject] })
                     await rewordsend(WalletId, req.body.plan_details[0].amount)
                     await house_rewards_service(WalletId, dt.refId, requireObject, previousePlan.user_id)
-                    await level_reward_service(WalletId, refferalId , requireObject, previousePlan.user_id);
+                    await level_reward_service(WalletId, refferalId, requireObject, previousePlan.user_id);
                     return res.send({ message: "plan saved successfully", status: "Ok", response: "team get reward both success" })
                 } else {
                     if (!user) {
